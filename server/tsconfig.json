@@ -1,17 +1,25 @@
 {
   "compilerOptions": {
-    "target": "ES2021", // Hoặc ES2022
+    "target": "ES2021",
     "module": "CommonJS",
-    "moduleResolution": "node", // << QUAN TRỌNG: Đảm bảo có dòng này và nó không bị comment
-    "rootDir": "./src",
+    "moduleResolution": "node",
+    // "rootDir": "./src", // Mình đã comment/xóa cái này ở bước trước để fix lỗi ts-node, cứ để vậy xem sao.
+                          // Nếu không có rootDir, baseUrl: "./" sẽ hiểu là gốc của project (thư mục server).
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "sourceMap": true
+    "sourceMap": true,
+
+    "baseUrl": "./src", // << QUAN TRỌNG: Đặt thư mục gốc cho alias là 'src'
+                       //    (tức là @/ sẽ trỏ vào thư mục src/)
+    "paths": {         // << QUAN TRỌNG: Định nghĩa các alias
+      "@/*": ["./*"]   //    "@/*" có nghĩa là bất cứ thứ gì sau @/
+                       //    ["./*"] sẽ được map tới tương ứng bên trong thư mục baseUrl (tức là src/*)
+    }
   },
-  "include": ["src/**/*"], // << Đảm bảo nó "nhìn thấy" được các file trong src
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
 }
