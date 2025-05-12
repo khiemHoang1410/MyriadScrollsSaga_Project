@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2021", // Hoặc ES2022
+    "module": "CommonJS",
+    "moduleResolution": "node", // << QUAN TRỌNG: Đảm bảo có dòng này và nó không bị comment
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "sourceMap": true
+  },
+  "include": ["src/**/*"], // << Đảm bảo nó "nhìn thấy" được các file trong src
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
+}
