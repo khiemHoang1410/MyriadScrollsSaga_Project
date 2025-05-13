@@ -9,6 +9,8 @@ export interface IUser extends Document {
   // registrationDate?: Date; // Mongoose timestamps sẽ tự xử lý createdAt
   // lastLoginDate?: Date;    // Mongoose timestamps sẽ tự xử lý updatedAt (có thể dùng cho lastLogin)
   // Mongoose tự tạo _id làm Khóa chính (PK)
+  createdAt?: Date; 
+  updatedAt?: Date; 
 }
 
 const UserSchema: Schema<IUser> = new Schema(

@@ -3,7 +3,7 @@
     "target": "ES2021",
     "module": "CommonJS",
     "moduleResolution": "node",
-    // "rootDir": "./src", // Mình đã comment/xóa cái này ở bước trước để fix lỗi ts-node, cứ để vậy xem sao.
+    "rootDir": "./src", // Mình đã comment/xóa cái này ở bước trước để fix lỗi ts-node, cứ để vậy xem sao.
                           // Nếu không có rootDir, baseUrl: "./" sẽ hiểu là gốc của project (thư mục server).
     "outDir": "./dist",
     "strict": true,

@@ -4,14 +4,21 @@ dotenv.config();
 
 import express, { Request, Response, Application } from 'express';
 import connectDB from '@/config/db'; 
+import authRoutes from '@/routes/authRoutes';
+
+
 const app: Application = express();
 const port: number = parseInt(process.env.PORT as string, 10) || 8000;
 
 // Kết nối tới MongoDB
 connectDB();
 
+// Middlewares để parse JSON và URL-encoded data từ request body
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// API Routes
+app.use('/api/auth', authRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from Myriad Scrolls Saga Backend! 📜 (DB Connection Attempted!)');
