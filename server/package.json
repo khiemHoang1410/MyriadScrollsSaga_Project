@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon --watch src --ext ts,json --exec \"ts-node -r tsconfig-paths/register src/index.ts\"",
+    "dev": "cross-env NODE_ENV=development nodemon --watch src --ext ts,json --exec \"ts-node -r tsconfig-paths/register src/index.ts\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -14,11 +14,14 @@
   "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "module-alias": "^2.2.3",
-    "mongoose": "^8.14.2"
+    "mongoose": "^8.14.2",
+    "pino": "^9.6.0",
+    "pino-http": "^10.4.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -26,6 +29,7 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.15.17",
     "nodemon": "^3.1.10",
+    "pino-pretty": "^13.0.0",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3"

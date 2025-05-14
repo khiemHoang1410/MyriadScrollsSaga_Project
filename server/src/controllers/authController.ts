@@ -1,13 +1,17 @@
 // server/src/controllers/authController.ts
-import { Request, Response } from 'express';
-import UserModel from '@/models/UserModel'; // Dùng alias @/ cho "chuyên nghiệp"
-import bcrypt from 'bcryptjs'; 
-import jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction } from 'express';
+import UserModel, { UserRole, IUser } from '@/models/UserModel';
+import bcrypt from 'bcryptjs';
+import jwt, { SignOptions } from 'jsonwebtoken'; // Đảm bảo SignOptions được import
+import { HttpStatus, AuthMessages, GeneralMessages, AuthenticatedUserPayload } from '@/types/auth.types';
+import logger from '@/config/logger';
+import { AppError, AuthError } from '@/utils/errors';
 
 interface RegisterUserRequestBody {
   username?: string;
   email?: string;
   password?: string;
+  roles?: UserRole[];
 }
 
 interface LoginUserRequestBody {
@@ -15,125 +19,166 @@ interface LoginUserRequestBody {
   password?: string;
 }
 
-export const registerUser = async (req: Request, res: Response): Promise<void> => {
+const generateToken = (user: IUser): string => {
+  const jwtSecret = process.env.JWT_SECRET;
+
+  // Logging để kiểm tra giá trị thực tế của jwtSecret khi chạy
+  // console.log('--- generateToken: JWT_SECRET ---', jwtSecret);
+  // console.log('--- generateToken: typeof JWT_SECRET ---', typeof jwtSecret);
+
+  if (!jwtSecret) { // Check này quan trọng, bao gồm cả undefined, null, và chuỗi rỗng ""
+    logger.error(AuthMessages.JWT_SECRET_MISSING + ' Ensure .env file is loaded and JWT_SECRET is set.');
+    // Đây là lỗi cấu hình server, không phải lỗi client có thể sửa
+    throw new AppError(AuthMessages.SERVER_ERROR_VERIFY_TOKEN, HttpStatus.INTERNAL_SERVER_ERROR, false);
+  }
+
+  // Cố gắng lấy userId và đảm bảo nó là string
+  // Dùng (user as any) để tạm thời bỏ qua kiểm tra kiểu của TypeScript nếu nó quá "cứng đầu"
+  // với _id, mặc dù IUser extends Document phải có _id.
+  const userIdFromDB = (user as any)?._id;
+  let userIdString: string | undefined;
+
+  if (userIdFromDB && typeof userIdFromDB.toString === 'function') {
+    userIdString = userIdFromDB.toString();
+  }
+  
+  // console.log('--- generateToken: user._id (from DB) ---', userIdFromDB);
+  // console.log('--- generateToken: userIdString (after toString) ---', userIdString);
+
+
+  if (!userIdString || typeof userIdString !== 'string') {
+    logger.error('User ID is missing, not an ObjectId, or could not be converted to string for JWT payload.', {
+      username: user.username, // Log username để dễ debug
+      userIdRaw: userIdFromDB,
+    });
+    throw new AppError('Cannot generate token: Valid User ID is missing or invalid.', HttpStatus.INTERNAL_SERVER_ERROR, false);
+  }
+
+  const payload: AuthenticatedUserPayload = {
+    userId: userIdString,
+    username: user.username,
+    roles: user.roles,
+  };
+
+  const expiresInValue: string | number = process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '1h';
+  // console.log('--- generateToken: expiresInValue ---', expiresInValue);
+
+
+  const tokenOptions: SignOptions = {
+    expiresIn: expiresInValue as any, // Vẫn dùng 'as any' ở đây như một giải pháp tình thế cho lỗi TS2322
+                                     // Nếu không còn lỗi TS2322, có thể bỏ 'as any'
+  };
+
   try {
-    const { username, email, password }: RegisterUserRequestBody = req.body; // Lấy username, email, password từ request body
+    const token = jwt.sign(payload, jwtSecret, tokenOptions);
+    // console.log('--- generateToken: Token generated successfully ---', token.substring(0, 15) + "...");
+    return token;
+  } catch (error: any) {
+    logger.error('Failed to sign JWT token in generateToken.', {
+      errorMessage: error.message,
+      errorStack: error.stack,
+      payloadUsed: payload,
+      secretExists: !!jwtSecret, // true nếu jwtSecret có giá trị
+      optionsUsed: tokenOptions,
+    });
+    // Ném lỗi để global error handler có thể bắt và xử lý
+    throw new AppError('Failed to generate authentication token.', HttpStatus.INTERNAL_SERVER_ERROR, false);
+  }
+};
 
-    // 1. Kiểm tra xem thông tin có đầy đủ không
+export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { username, email, password, roles }: RegisterUserRequestBody = req.body;
+
     if (!username || !email || !password) {
-      res.status(400).json({ message: 'Please provide username, email, and password' });
-      return;
+      throw new AppError(GeneralMessages.VALIDATION_ERROR + ': Username, email, and password are required.', HttpStatus.BAD_REQUEST);
     }
 
-    // 2. Kiểm tra xem username hoặc email đã tồn tại chưa
-    const existingUserByUsername = await UserModel.findOne({ username });
-    if (existingUserByUsername) {
-      res.status(400).json({ message: 'Username already exists' });
-      return;
+    const existingUser = await UserModel.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      const field = existingUser.email === email ? 'Email' : 'Username';
+      throw new AppError(`${field} already exists.`, HttpStatus.BAD_REQUEST);
     }
 
-    const existingUserByEmail = await UserModel.findOne({ email });
-    if (existingUserByEmail) {
-      res.status(400).json({ message: 'Email already registered' });
-      return;
-    }
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
 
-    // 3. Băm mật khẩu (Hash password)
-    const salt = await bcrypt.genSalt(10); // Tạo "muối" với độ phức tạp 10
-    const passwordHash = await bcrypt.hash(password, salt); // Băm mật khẩu với "muối"
-
-    // 4. Tạo người dùng mới
     const newUser = new UserModel({
       username,
       email,
-      passwordHash, // Lưu mật khẩu đã băm
+      passwordHash,
+      roles: roles || [UserRole.USER],
     });
 
-    // 5. Lưu người dùng vào database
     const savedUser = await newUser.save();
 
-    // 6. Phản hồi thành công (không gửi lại passwordHash)
-    // Mình có thể tùy chỉnh thông tin trả về sau này, ví dụ thêm token JWT
-    res.status(201).json({
+    const userResponse = {
       _id: savedUser._id,
       username: savedUser.username,
       email: savedUser.email,
+      roles: savedUser.roles,
       createdAt: savedUser.createdAt,
-      updatedAt: savedUser.updatedAt,
-      message: 'User registered successfully!',
-    });
+    };
 
-  } catch (error: any) {
-    console.error('Error during user registration:', error);
-    // Xử lý lỗi do validate của Mongoose (ví dụ: email không đúng định dạng, username quá ngắn)
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map((val: any) => val.message);
-      res.status(400).json({ message: messages.join(', ') });
-      return;
+    res.status(HttpStatus.CREATED).json({
+      user: userResponse,
+      message: 'User registered successfully! Please log in.',
+    });
+  } catch (error) {
+    if (error instanceof AppError) return next(error);
+    // Xử lý lỗi từ Mongoose validation
+    if ((error as any).name === 'ValidationError') {
+      // Lấy thông điệp lỗi cụ thể hơn từ Mongoose nếu có thể
+      let messages = (error as any).message;
+      if ((error as any).errors) {
+        messages = Object.values((error as any).errors).map((val: any) => val.message).join(', ');
+      }
+      return next(new AppError(GeneralMessages.VALIDATION_ERROR + ': ' + messages, HttpStatus.BAD_REQUEST));
     }
-    res.status(500).json({ message: 'Server error during registration', error: error.message });
+    logger.error('Error during user registration:', { errorMessage: (error as Error).message, errorStack: (error as Error).stack });
+    next(new AppError('Server error during registration.', HttpStatus.INTERNAL_SERVER_ERROR, false));
   }
 };
 
-export const loginUser = async (req: Request, res: Response): Promise<void> => {
+export const loginUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email, password }: LoginUserRequestBody = req.body;
 
-    // 1. Kiểm tra thông tin đăng nhập có đầy đủ không
     if (!email || !password) {
-      res.status(400).json({ message: 'Email and password are required' });
-      return;
+      throw new AppError(GeneralMessages.VALIDATION_ERROR + ': Email and password are required.', HttpStatus.BAD_REQUEST);
     }
 
-    // 2. Tìm người dùng bằng email
     const user = await UserModel.findOne({ email });
     if (!user) {
-      res.status(401).json({ message: 'Invalid credentials - User not found' }); // Không nên nói rõ là user hay pass sai
-      return;
+      throw new AuthError(AuthMessages.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED);
     }
 
-    // 3. So sánh mật khẩu người dùng nhập với passwordHash trong database
+    // Kiểm tra xem user có passwordHash không (phòng trường hợp dữ liệu DB bị lỗi)
+    if (!user.passwordHash) {
+        logger.error(`User ${email} found but has no passwordHash.`);
+        throw new AppError('User account is improperly configured.', HttpStatus.INTERNAL_SERVER_ERROR, false);
+    }
+
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      res.status(401).json({ message: 'Invalid credentials - Password mismatch' }); // Không nên nói rõ là user hay pass sai
-      return;
+      throw new AuthError(AuthMessages.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED);
     }
 
-    // 4. Nếu thông tin hợp lệ, tạo JWT token
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      console.error('FATAL ERROR: JWT_SECRET is not defined in .env file');
-      res.status(500).json({ message: 'Server configuration error' }); // Lỗi server, không phải lỗi người dùng
-      return;
-    }
+    const token = generateToken(user);
 
-    const payload = {
-      userId: user._id,
-      username: user.username,
-      // Bạn có thể thêm các thông tin khác vào payload nếu cần (ví dụ: role)
-    };
-
-    const token = jwt.sign(
-      payload,
-      jwtSecret,
-      { expiresIn: '1h' } // Token hết hạn sau 1 giờ (có thể là '1d', '7d',...)
-    );
-
-    // 5. Phản hồi thành công, gửi token về cho client
-    res.status(200).json({
+    res.status(HttpStatus.OK).json({
       message: 'Login successful!',
       token,
-      user: { // Gửi lại một vài thông tin user cơ bản (không gửi passwordHash)
+      user: {
         _id: user._id,
         username: user.username,
         email: user.email,
+        roles: user.roles,
       },
     });
-
-  } catch (error: any) {
-    console.error('Error during user login:', error);
-    res.status(500).json({ message: 'Server error during login', error: error.message });
+  } catch (error) {
+    if (error instanceof AppError) return next(error); // Bao gồm cả AuthError vì nó extends AppError
+    logger.error('Error during user login:', { errorMessage: (error as Error).message, errorStack: (error as Error).stack });
+    next(new AppError('Server error during login.', HttpStatus.INTERNAL_SERVER_ERROR, false));
   }
 };
-
-// (Sau này mình sẽ thêm các controller khác cho login, logout,... ở đây)
