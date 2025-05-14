@@ -1,0 +1,12 @@
+# Auto-detect text files and ensure they use LF line endings in the repository
+* text=auto eol=lf
+
+# You can also set specific rules for file types if needed
+# *.js    text eol=lf
+# *.ts    text eol=lf
+# *.json  text eol=lf
+# *.css   text eol=lf
+# *.md    text eol=lf
+
+# For files that must have CRLF (e.g., Windows batch files)
+# *.bat   text eol=crlf

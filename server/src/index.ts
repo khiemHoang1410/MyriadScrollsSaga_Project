@@ -20,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 // API Routes
 app.use('/api/auth', authRoutes);
 
+
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from Myriad Scrolls Saga Backend! 📜 (DB Connection Attempted!)');
 });
