@@ -1,22 +1,22 @@
 // server/src/middleware/validateResource.ts
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express'; // Đảm bảo RequestHandler được import
 import { AnyZodObject, ZodError } from 'zod';
 import { HttpStatus, GeneralMessages } from '@/types';
-import { logger } from '@/config';
-// import { ValidationError } from '@/utils'; // Nếu có ValidationError class
+import { logger } from '@/config'; // Đảm bảo logger được import
 
-export const validateResource = (schema: AnyZodObject) =>
-  async (req: Request, res: Response, next: NextFunction) => {
+export const validateResource = (schema: AnyZodObject): RequestHandler => // Kiểu trả về là RequestHandler
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => { // Kiểu trả về của hàm async là Promise<void>
     try {
-      await schema.parseAsync({ // Dùng parseAsync nếu schema có async refinements
+      await schema.parseAsync({
         body: req.body,
         query: req.query,
         params: req.params,
       });
-      return next();
+      next(); // Nếu thành công, gọi next()
     } catch (error: any) {
       if (error instanceof ZodError) {
-        const formattedErrors = error.errors.map((err) => ({
+        // Khai báo formattedErrors ở đây!
+        const formattedErrors = error.errors.map((err) => ({ // << DÒNG KHAI BÁO formattedErrors
           path: err.path.join('.'),
           message: err.message,
           code: err.code,
@@ -24,18 +24,16 @@ export const validateResource = (schema: AnyZodObject) =>
         logger.warn('Zod Validation Failed:', {
           path: req.path,
           method: req.method,
-          errors: formattedErrors,
+          errors: formattedErrors, // Sử dụng formattedErrors đã khai báo
         });
-        // Nếu có ValidationError class:
-        // return next(new ValidationError(GeneralMessages.VALIDATION_ERROR, formattedErrors));
-        return res.status(HttpStatus.BAD_REQUEST).json({
+        res.status(HttpStatus.BAD_REQUEST).json({ // Gửi response lỗi
           status: 'error',
           message: GeneralMessages.VALIDATION_ERROR,
-          errors: formattedErrors,
+          errors: formattedErrors, // Sử dụng formattedErrors đã khai báo
         });
+        return; // Kết thúc hàm ở đây sau khi gửi response
       }
-      return next(error); // Chuyển lỗi khác cho global error handler
+      // Nếu không phải ZodError, chuyển lỗi cho global error handler
+      next(error);
     }
   };
-
-export default validateResource; // Đảm bảo export default

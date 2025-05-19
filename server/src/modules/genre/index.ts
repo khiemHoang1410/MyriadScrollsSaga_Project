@@ -2,9 +2,10 @@
 
 export * from './genre.model'; // Export IGenre interface
 export { default as GenreModel } from './genre.model'; // Export GenreModel
+export * from './genre.schema'; // << THÊM DÒNG NÀY
 
 // Các file khác của module 'genre' sẽ được export ở đây sau này
-// export * from './genre.service';
-// export * from './genre.controller';
-// export * from './genre.route';
-// export * from './genre.schema';
+export * as genreService from './genre.service';
+export * as genreController from './genre.controller';
+export { default as genreRoutes } from './genre.route'; 
+ 

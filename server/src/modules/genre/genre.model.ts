@@ -5,18 +5,19 @@ import mongoose, { Document, Schema, model } from 'mongoose';
 export interface IGenre extends Document {
   name: string;        // Tên thể loại, ví dụ: "Fantasy", "Kinh Dị Hiện Đại"
   slug: string;        // Slug cho URL thân thiện, ví dụ: "fantasy", "kinh-di-hien-dai"
-  description?: string; // Mô tả thêm về thể loại (tùy chọn)
+  description?: string| null; // Mô tả thêm về thể loại (tùy chọn)
   // Có thể thêm các trường khác nếu bro muốn, ví dụ: iconUrl, colorCode, etc.
   // createdAt, updatedAt sẽ được Mongoose tự động thêm
+  isActive: Boolean;
 }
 
 const GenreSchema = new Schema<IGenre>(
   {
     name: {
       type: String,
-      required: [true, 'Genre name is required.'], // Bắt buộc phải có tên
-      unique: true, // Tên thể loại phải là duy nhất
-      trim: true,   // Xóa khoảng trắng thừa
+      required: [true, 'Genre name is required.'],
+      unique: true,
+      trim: true,
       maxlength: [100, 'Genre name cannot exceed 100 characters.'],
     },
     slug: {
@@ -24,27 +25,31 @@ const GenreSchema = new Schema<IGenre>(
       required: [true, 'Genre slug is required.'],
       unique: true,
       trim: true,
-      lowercase: true, // Slug nên là chữ thường
-      // Slug thường được tạo tự động từ 'name' ở tầng service hoặc pre-save hook
+      lowercase: true,
     },
     description: {
       type: String,
       trim: true,
       maxlength: [500, 'Genre description cannot exceed 500 characters.'],
+      default: null,
     },
-    // Ví dụ thêm một trường:
-    // isActive: { type: Boolean, default: true }, // Để admin có thể ẩn/hiện một thể loại
+    isActive: { // << THÊM isActive VÀO SCHEMA
+      type: Boolean,
+      default: true, // Mặc định là true khi tạo mới
+    },
   },
   {
-    timestamps: true, // Tự động thêm createdAt và updatedAt
+    timestamps: true,
     toJSON: { virtuals: true, getters: true },
     toObject: { virtuals: true, getters: true },
   }
 );
 
+
 // --- Indexes ---
 GenreSchema.index({ name: 1 }); // Index theo tên để tìm kiếm nhanh
 GenreSchema.index({ slug: 1 }); // Index theo slug
+GenreSchema.index({ isActive: 1 }); // Thêm index cho isActive nếu hay query theo trường này
 
 // --- Pre-save Hook to auto-generate slug from name (Ví dụ) ---
 // (Nếu không muốn tự động ở đây, thì sẽ xử lý ở service layer khi tạo/cập nhật genre)

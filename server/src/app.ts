@@ -10,6 +10,7 @@ import { errorHandler, validateResource } from '@/middleware'; // Sử dụng ba
 import authRoutes from '@/routes/authRoutes'; // Hiện tại vẫn giữ đường dẫn này
 import adminRoutes from '@/routes/adminRoutes'; // Hiện tại vẫn giữ đường dẫn này
 // import bookRoutes from '@/modules/book/book.route'; // Ví dụ khi có module book
+import { genreRoutes } from '@/modules/genre'; // << THÊM DÒNG NÀY (đảm bảo đường dẫn đúng)
 
 const app: Application = express();
 
@@ -26,6 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/genres', genreRoutes);
 // app.use('/api/books', bookRoutes); // Ví dụ khi có module book
 
 // Route test cơ bản
