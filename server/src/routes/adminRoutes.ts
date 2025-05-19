@@ -1,6 +1,6 @@
 // server/src/routes/adminRoutes.ts
 import express from 'express';
-import { authenticateToken, authorizeRoles } from '@/middleware/authenticateToken';
+import { authenticateToken, authorizeRoles, validateResource } from '@/middleware'; // << SỬA THÀNH ĐƯỜNG DẪN NÀY
 import { UserRole } from '@/models/UserModel';
 import {
     getAllUsers,
