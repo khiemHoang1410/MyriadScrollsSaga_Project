@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import UserModel, { UserRole, IUser } from '@/models/UserModel';
 import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken'; // Đảm bảo SignOptions được import
-import { HttpStatus, AuthMessages, GeneralMessages, AuthenticatedUserPayload } from '@/types/auth.types';
+import { HttpStatus, AuthMessages, GeneralMessages, AuthenticatedUserPayload } from '@/types/api.types';
 import logger from '@/config/logger';
 import { AppError, AuthError } from '@/utils/errors';
 

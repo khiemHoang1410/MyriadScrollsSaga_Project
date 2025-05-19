@@ -1,35 +1,38 @@
 // server/src/utils/errors.ts
+import { HttpStatus } from '@/types'; // Sẽ tạo barrel file cho types
 
-import { HttpStatus } from "@/types/auth.types";
-
-/**
- * Lớp lỗi tùy chỉnh cho các vấn đề liên quan đến Authentication và Authorization.
- * Giúp phân biệt lỗi và xử lý tập trung hơn.
- */
 export class AppError extends Error {
-    public readonly statusCode: number;
-    public readonly isOperational: boolean; // Phân biệt lỗi do người dùng/client (operational) và lỗi hệ thống
-  
-    constructor(message: string, statusCode: number, isOperational: boolean = true) {
-      super(message);
-      this.statusCode = statusCode;
-      this.isOperational = isOperational;
-  
-      // Đảm bảo prototype chain hoạt động đúng cho instanceof
-      Object.setPrototypeOf(this, AppError.prototype);
-  
-      // Ghi lại stack trace (không bao gồm constructor của AppError)
-      Error.captureStackTrace(this, this.constructor);
-    }
+  public readonly statusCode: number;
+  public readonly isOperational: boolean;
+
+  constructor(message: string, statusCode: number, isOperational: boolean = true) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = isOperational;
+    Object.setPrototypeOf(this, AppError.prototype);
+    Error.captureStackTrace(this, this.constructor);
   }
-  
-  export class AuthError extends AppError {
-    constructor(message: string, statusCode: number = HttpStatus.UNAUTHORIZED) {
-      super(message, statusCode, true); // Lỗi auth thường là operational
-      Object.setPrototypeOf(this, AuthError.prototype);
-    }
+}
+
+export class AuthError extends AppError {
+  constructor(message: string, statusCode: number = HttpStatus.UNAUTHORIZED) {
+    super(message, statusCode, true);
+    Object.setPrototypeOf(this, AuthError.prototype);
   }
-  
-  // Có thể thêm các lớp lỗi cụ thể khác nếu cần
-  // export class NotFoundError extends AppError { ... }
-  // export class ValidationError extends AppError { ... }
+}
+
+// export class NotFoundError extends AppError {
+//   constructor(message: string = 'Resource not found') {
+//     super(message, HttpStatus.NOT_FOUND, true);
+//     Object.setPrototypeOf(this, NotFoundError.prototype);
+//   }
+// }
+
+// export class ValidationError extends AppError {
+//   public readonly errors?: any[]; // Để chứa mảng lỗi chi tiết từ Zod hoặc Mongoose
+//   constructor(message: string = 'Validation failed', errors?: any[], statusCode: number = HttpStatus.BAD_REQUEST) {
+//     super(message, statusCode, true);
+//     this.errors = errors;
+//     Object.setPrototypeOf(this, ValidationError.prototype);
+//   }
+// }

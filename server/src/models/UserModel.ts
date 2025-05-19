@@ -1,6 +1,6 @@
 // server/src/models/UserModel.ts
 import logger from '@/config/logger';
-import { AuthenticatedRequest, AuthMessages, HttpStatus } from '@/types/auth.types';
+import { AuthenticatedRequest, AuthMessages, HttpStatus } from '@/types/api.types';
 import { AuthError } from '@/utils/errors';
 import { NextFunction } from 'express';
 import mongoose, { Document, Schema } from 'mongoose';

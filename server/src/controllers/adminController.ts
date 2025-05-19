@@ -1,7 +1,7 @@
 // server/src/controllers/adminController.ts
 import { Request, Response, NextFunction } from 'express';
 import UserModel, { IUser, UserRole } from '@/models/UserModel';
-import { AuthenticatedRequest, HttpStatus, AuthMessages, GeneralMessages } from '@/types/auth.types';
+import { AuthenticatedRequest, HttpStatus, AuthMessages, GeneralMessages } from '@/types/api.types';
 import { AppError } from '@/utils/errors';
 import logger from '@/config/logger';
 import mongoose from 'mongoose';
