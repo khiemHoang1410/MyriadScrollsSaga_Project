@@ -15,46 +15,43 @@ import { logger } from '@/config'; // Logger
  * @throws AppError nếu tên Genre đã tồn tại hoặc có lỗi khác
  */
 export const createGenre = async (input: CreateGenreInput): Promise<IGenre> => {
-  const { name, description, isActive } = input;
-
-  // Model pre-save hook sẽ tự tạo slug từ name.
-  // Mình vẫn nên kiểm tra xem name (hoặc slug sẽ được tạo) có bị trùng không ở đây
-  // để đưa ra thông báo lỗi thân thiện hơn, trước khi DB báo lỗi unique constraint.
-  // Tuy nhiên, pre-save hook trong model hiện tại đã xử lý việc tạo slug.
-  // Mongoose sẽ tự báo lỗi nếu 'name' hoặc 'slug' (là unique) bị trùng khi save.
+  logger.info('Service: Attempting to create genre with input:', input);
+  const { name, description, isActive } = input; // Chỉ lấy các trường client gửi
 
   try {
+    logger.info('--- SERVICE: About to call GenreModel.create (pre-save hook will generate slug) ---');
+    // Slug sẽ được pre-save hook trong GenreModel tự động tạo và gán
     const newGenre = await GenreModel.create({
       name,
       description,
       isActive,
-      // slug sẽ được model tự điền
     });
-    logger.info(`Genre created successfully: ${newGenre.name} (ID: ${newGenre._id})`);
+    logger.info(`--- SERVICE: GenreModel.create successful --- Name: ${newGenre.name}, Slug: ${newGenre.slug}`);
     return newGenre;
-  } catch (error: any) {
-    // Bắt lỗi unique constraint từ MongoDB (mã lỗi 11000)
-    if (error.code === 11000 && error.keyPattern) {
-      if (error.keyPattern.name) {
-        throw new AppError(
-          `Genre name '${name}' already exists.`,
-          HttpStatus.CONFLICT // 409 Conflict
-        );
+  } catch (dbError: any) {
+    logger.error('--- SERVICE: CATCH BLOCK AFTER GenreModel.create ---');
+    logger.error('SERVICE DB ERROR: Raw dbError object:', dbError);
+    logger.error('SERVICE DB ERROR: dbError name:', dbError.name);
+    logger.error('SERVICE DB ERROR: dbError message:', dbError.message);
+    logger.error('SERVICE DB ERROR: dbError code (if any):', dbError.code);
+    logger.error('SERVICE DB ERROR: dbError keyPattern (if any):', dbError.keyPattern);
+    // Nếu là ValidationError từ Mongoose (ví dụ hook ném lỗi), dbError.name sẽ là 'ValidationError'
+    // và dbError.errors sẽ chứa chi tiết
+    if (dbError.name === 'ValidationError') {
+        // Lấy message lỗi từ ValidationError cho rõ ràng hơn
+        const messages = Object.values(dbError.errors).map((val: any) => val.message).join(', ');
+        throw new AppError(`Validation failed: ${messages}`, HttpStatus.BAD_REQUEST);
+    }
+
+    if (dbError.code === 11000 && dbError.keyPattern) {
+      if (dbError.keyPattern.name) {
+        throw new AppError(`Genre name '${name}' already exists.`, HttpStatus.CONFLICT);
       }
-      if (error.keyPattern.slug) {
-        // Lỗi này ít xảy ra nếu slug được tạo từ name và name là unique,
-        // nhưng vẫn có thể xảy ra nếu có cách nào đó tạo slug trùng.
-        throw new AppError(
-          `Genre slug derived from '${name}' already exists.`,
-          HttpStatus.CONFLICT
-        );
+      if (dbError.keyPattern.slug) { // Lỗi unique slug từ DB (do pre-save hook tạo ra)
+        throw new AppError(`Generated slug from name '${name}' already exists or another genre has this slug. Try a different name.`, HttpStatus.CONFLICT);
       }
     }
-    logger.error('Error creating genre:', { input, error });
-    throw new AppError(
-      GeneralMessages.ERROR + ' creating genre.',
-      HttpStatus.INTERNAL_SERVER_ERROR
-    );
+    throw new AppError(GeneralMessages.ERROR + ' creating genre in database.', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -154,10 +151,10 @@ export const updateGenreById = async (
       );
     }
     if (error.code === 11000 && error.keyPattern && error.keyPattern.slug) {
-        throw new AppError(
-          `Genre slug derived from '${updates.name}' already exists.`,
-          HttpStatus.CONFLICT
-        );
+      throw new AppError(
+        `Genre slug derived from '${updates.name}' already exists.`,
+        HttpStatus.CONFLICT
+      );
     }
     logger.error(`Error updating genre by ID ${genreId}:`, { input, error });
     if (error.name === 'CastError' && error.path === '_id') {

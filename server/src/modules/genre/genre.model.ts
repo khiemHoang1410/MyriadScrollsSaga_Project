@@ -1,5 +1,7 @@
 // server/src/modules/genre/genre.model.ts
+import { logger } from '@/config';
 import mongoose, { Document, Schema, model } from 'mongoose';
+import { generateSlug } from '@/utils';
 
 // Interface định nghĩa cấu trúc cho một Genre document
 export interface IGenre extends Document {
@@ -22,7 +24,8 @@ const GenreSchema = new Schema<IGenre>(
     },
     slug: {
       type: String,
-      required: [true, 'Genre slug is required.'],
+      // required: [true, 'Genre slug is required.'], // << TẠM THỜI COMMENT DÒNG NÀY
+      default: () => `temp-slug-<span class="math-inline">\{Date\.now\(\)\}\-</span>{Math.random().toString(36).substring(7)}`, // HOẶC THÊM DEFAULT TẠM
       unique: true,
       trim: true,
       lowercase: true,
@@ -51,20 +54,32 @@ GenreSchema.index({ name: 1 }); // Index theo tên để tìm kiếm nhanh
 GenreSchema.index({ slug: 1 }); // Index theo slug
 GenreSchema.index({ isActive: 1 }); // Thêm index cho isActive nếu hay query theo trường này
 
-// --- Pre-save Hook to auto-generate slug from name (Ví dụ) ---
-// (Nếu không muốn tự động ở đây, thì sẽ xử lý ở service layer khi tạo/cập nhật genre)
 GenreSchema.pre<IGenre>('save', function (next) {
-  if (this.isModified('name') || this.isNew) {
-    // Tạo slug đơn giản: chuyển thành chữ thường, thay khoảng trắng bằng gạch nối, loại bỏ ký tự đặc biệt
-    this.slug = this.name
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, '-') // Thay thế khoảng trắng bằng '-'
-      .replace(/[^\w-]+/g, ''); // Loại bỏ các ký tự không phải chữ, số, gạch dưới, gạch nối
-    // Có thể cần một thư viện tạo slug "xịn" hơn nếu tên có nhiều ký tự đặc biệt hoặc tiếng Việt có dấu
+  logger.debug('[Genre Pre-Save Hook] Triggered.', { /* ... */ });
+
+  if ((this.isModified('name') || this.isNew)) {
+    if (typeof this.name === 'string' && this.name.trim() !== '') {
+      const generated = generateSlug(this.name); // << DÙNG generateSlug Ở ĐÂY
+      if (generated) {
+        this.slug = generated;
+        logger.debug('[Genre Pre-Save Hook] Generated slug:', this.slug);
+        return next();
+      } else {
+        logger.error('[Genre Pre-Save Hook] Slug generation resulted in empty string for name:', this.name);
+        // Vì Zod đã check ở tầng trên, trường hợp này rất hiếm khi xảy ra
+        // Nhưng nếu vẫn xảy ra, và slug là required, Mongoose sẽ tự báo lỗi
+        // Hoặc mình có thể ném lỗi tường minh hơn:
+        return next(new Error(`Cannot generate a valid (non-empty) slug for the genre name: "${this.name}".`));
+      }
+    } else {
+      logger.error('[Genre Pre-Save Hook] Name is invalid or empty for slug generation.');
+      return next(new Error('Genre name is required and must be a non-empty string to generate a slug.'));
+    }
   }
-  next();
+  return next();
 });
+
+
 
 const GenreModel = model<IGenre>('Genre', GenreSchema);
 

@@ -9,15 +9,7 @@ import {
 } from './genre.schema';
 import { HttpStatus, GeneralMessages } from '@/types';
 
-// Hàm test cũ, có thể giữ lại hoặc xóa nếu không cần nữa
-export const testGenreHandler = (req: Request, res: Response, next: NextFunction): void => {
-  try {
-    console.log('Test Genre Handler Called!');
-    res.status(HttpStatus.OK).json({ message: 'Genre test route is working!' });
-  } catch (error) {
-    next(error);
-  }
-};
+
 
 // --- Các Async Handlers đã được tối ưu cho asyncHandler wrapper ---
 
