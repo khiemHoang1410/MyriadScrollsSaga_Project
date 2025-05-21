@@ -1,11 +1,10 @@
 // server/src/modules/tag/tag.schema.ts
 import { z } from 'zod';
-import { generateSlug } from '@/utils/slugify.util'; // Import hàm generateSlug
+import { generateSlug } from '@/utils/slugify.util';
 
 const SLUG_VALIDATION_MESSAGE_TAG =
   'Tag name must be able to form a valid slug (e.g., contain letters or numbers). It cannot consist only of special characters that are removed during slug generation.';
 
-// Schema cho việc tạo một Tag mới
 export const createTagSchema = z.object({
   body: z.object({
     name: z
@@ -23,13 +22,13 @@ export const createTagSchema = z.object({
       .trim()
       .max(500, 'Tag description cannot exceed 500 characters.')
       .optional()
-      .nullable(), // Cho phép null nếu muốn
+      .nullable(),
+    isActive: z.boolean().optional(), // << THÊM isActive (optional khi tạo)
   }),
 });
 
 export type CreateTagInput = z.infer<typeof createTagSchema>['body'];
 
-// Schema cho việc cập nhật Tag
 export const updateTagSchema = z.object({
   params: z.object({
     tagId: z.string({ required_error: 'Tag ID in params is required.' }),
@@ -50,14 +49,13 @@ export const updateTagSchema = z.object({
       .max(500, 'Tag description cannot exceed 500 characters.')
       .optional()
       .nullable(),
-    // usageCount không được cập nhật trực tiếp qua API này
+    isActive: z.boolean().optional(), // << THÊM isActive (optional khi cập nhật)
   }),
 });
 
 export type UpdateTagInput = z.infer<typeof updateTagSchema>['body'];
 export type UpdateTagParams = z.infer<typeof updateTagSchema>['params'];
 
-// Schema cho params khi cần tagId
 export const tagIdParamsSchema = z.object({
   params: z.object({
     tagId: z.string({ required_error: 'Tag ID in params is required.' }),

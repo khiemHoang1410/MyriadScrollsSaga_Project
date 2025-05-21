@@ -2,6 +2,7 @@
 import express, { Application, Request, Response } from 'express';
 import dotenv from 'dotenv'; // Đảm bảo dotenv được gọi sớm nếu chưa có ở đâu khác
 dotenv.config(); // Gọi ở đây hoặc ở server.ts trước khi import app
+import { asyncHandler } from '@/utils'; // << Bro đã có cái này rồi
 
 import { connectDB, httpLogger, logger } from '@/config'; // Sử dụng barrel file
 import { errorHandler, validateResource } from '@/middleware'; // Sử dụng barrel file
@@ -13,17 +14,38 @@ import adminRoutes from '@/routes/adminRoutes'; // Hiện tại vẫn giữ đư
 import { genreRoutes } from '@/modules/genre'; 
 import { tagRoutes } from '@/modules/tag'; 
 
+import TempTestModel from '@/modules/tempTest/tempTest.model'; // << THÊM IMPORT NÀY (đường dẫn có thể cần điều chỉnh nếu bro đặt file ở chỗ khác)
+
 const app: Application = express();
-
-// Kết nối tới MongoDB
 connectDB();
-
-// Sử dụng Pino HTTP logger trước tất cả các route và middleware khác
 app.use(httpLogger);
-
-// Middlewares để parse JSON và URL-encoded data từ request body
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Kết nối tới MongoDB
+app.post('/api/temp-test/create', asyncHandler(async (req: Request, res: Response) => {
+  try {
+    console.log('--- TEMP TEST ROUTE: Received request to create test document ---');
+    const testName = req.body.testName || `Test ${Date.now()}`;
+    
+    console.log('--- TEMP TEST ROUTE: Calling TempTestModel.create with name:', testName);
+    const newTestData = await TempTestModel.create({ testName });
+    console.log('--- TEMP TEST ROUTE: TempTestModel.create SUCCEEDED ---', newTestData);
+    
+    res.status(201).json({
+      message: 'TempTest document created successfully!',
+      data: newTestData,
+    });
+  } catch (error: any) {
+    console.error('--- TEMP TEST ROUTE: ERROR ---', error.message, error.stack);
+    res.status(500).json({
+      message: 'Error in temp-test route',
+      error: error.message,
+    });
+  }
+}));
+
+// Middlewares để parse JSON và URL-encoded data từ request body
 
 // API Routes
 app.use('/api/auth', authRoutes);

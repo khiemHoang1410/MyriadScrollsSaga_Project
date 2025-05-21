@@ -1,15 +1,15 @@
 // server/src/modules/tag/tag.model.ts
-import { generateSlug } from '@/utils/slugify.util'; // Import hàm tạo slug "thần thánh"
-import { logger } from '@/config'; // Hoặc dùng console.log nếu muốn trong hook
 import mongoose, { Document, Schema, model } from 'mongoose';
+import { logger } from '@/config';
+import { generateSlug } from '@/utils/slugify.util';
 
-// Interface định nghĩa cấu trúc cho một Tag document
 export interface ITag extends Document {
-  name: string;        // Tên tag, ví dụ: "Action", "Dark Fantasy", "Female Protagonist"
-  slug: string;        // Slug cho URL, ví dụ: "action", "dark-fantasy", "female-protagonist"
-  description?: string | null; // Mô tả thêm về tag (tùy chọn)
-  usageCount: number;  // Số lượng sách sử dụng tag này
-  // createdAt, updatedAt sẽ được Mongoose tự động thêm
+  name: string;
+  slug: string;
+  description?: string | null;
+  usageCount: number;
+  isActive: boolean; // << THÊM VÀO INTERFACE
+  // createdAt, updatedAt
 }
 
 const TagSchema = new Schema<ITag>(
@@ -23,10 +23,10 @@ const TagSchema = new Schema<ITag>(
     },
     slug: {
       type: String,
-      required: [true, 'Internal: Tag slug could not be generated and is required.'],
       unique: true,
       trim: true,
       lowercase: true,
+
     },
     description: {
       type: String,
@@ -34,47 +34,61 @@ const TagSchema = new Schema<ITag>(
       maxlength: [500, 'Tag description cannot exceed 500 characters.'],
       default: null,
     },
-    usageCount: { // Số lần tag này được sử dụng
+    usageCount: {
       type: Number,
       default: 0,
       min: [0, 'Usage count cannot be negative.'],
     },
+    isActive: { // << THÊM TRƯỜNG isActive
+      type: Boolean,
+      default: true, // Mặc định là true khi tạo mới
+      index: true,   // Nên index nếu thường xuyên query/filter theo trường này
+    },
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true, getters: true }, // Để virtual 'id' hoạt động
+    toJSON: { virtuals: true, getters: true },
     toObject: { virtuals: true, getters: true },
   }
 );
 
 // --- Indexes ---
+TagSchema.index({ name: 1 });
+TagSchema.index({ usageCount: -1 });
+// TagSchema.index({ isActive: 1 }); // Đã có trong định nghĩa trường isActive ở trên
 
-TagSchema.index({ usageCount: -1 }); // Index usageCount để sau này lấy tag phổ biến
-
-// --- Pre-save Hook to auto-generate slug from name ---
-TagSchema.pre<ITag>('save', function (next) {
-  // Log để theo dõi (có thể dùng logger.debug thay console.log)
-  console.log('[Tag Pre-Save Hook] Triggered.', { isNew: this.isNew, isNameModified: this.isModified('name'), currentName: this.name });
+// --- Pre-save Hook "chuẩn" (giữ nguyên như phiên bản hoạt động tốt trước đó) ---
+TagSchema.pre<ITag>('save', function(next) {
+  // Đảm bảo LOG_LEVEL trong logger.ts là 'debug' để thấy log này
+  logger.debug(`[TagModel Pre-Save Hook] Triggered. isNew: ${this.isNew}, isNameModified: ${this.isModified('name')}`);
 
   if (this.isModified('name') || this.isNew) {
     if (typeof this.name === 'string' && this.name.trim() !== '') {
-      const generated = generateSlug(this.name); // Dùng hàm generateSlug từ utils
-      if (generated) {
-        this.slug = generated;
-        console.log('[Tag Pre-Save Hook] Generated slug:', this.slug);
+      const generatedSlug = generateSlug(this.name);
+      if (generatedSlug) {
+        this.slug = generatedSlug;
+        logger.debug(`[TagModel Pre-Save Hook] Slug generated and assigned: '${this.slug}' for name: '${this.name}'`);
         return next();
       } else {
-        console.error('[Tag Pre-Save Hook] Slug generation resulted in empty string for name:', this.name);
-        return next(new Error(`Cannot generate a valid (non-empty) slug for the tag name: "${this.name}".`));
+        const errMsg = `Critical: Slug could not be generated from name "${this.name}" because the name likely results in an empty slug. Zod validation should have caught this.`;
+        logger.error(`[TagModel Pre-Save Hook] ${errMsg}`);
+        return next(new Error(errMsg));
       }
     } else {
-      console.error('[Tag Pre-Save Hook] Name is invalid or empty for slug generation.');
-      return next(new Error('Tag name is required and must be a non-empty string to generate a slug.'));
+      const errMsg = 'Critical: Tag name is invalid (not a string or empty) for slug generation. Zod validation should have caught this.';
+      logger.error(`[TagModel Pre-Save Hook] ${errMsg}`);
+      return next(new Error(errMsg));
     }
+  }
+  if (!this.slug && this.isNew) {
+      const errMsg = `Critical Fallback: Slug is still missing for NEW tag with name "${this.name}" after attempting generation. This indicates a flaw in previous checks or invalid initial name.`;
+      logger.error(`[TagModel Pre-Save Hook] ${errMsg}`);
+      return next(new Error(errMsg));
   }
   return next();
 });
 
 const TagModel = model<ITag>('Tag', TagSchema);
+// const TagModel = model<ITag>('Tag_WorkingModel', TagSchema); // Hoặc giữ tên test nếu chưa muốn đổi
 
 export default TagModel;

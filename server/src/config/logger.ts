@@ -6,7 +6,7 @@ const loggerName = 'MyriadScrollsSaga'; // Đặt tên cho logger của mình
 
 const loggerOptions: pino.LoggerOptions = {
   name: loggerName, // Sử dụng tên đã đặt
-  level: process.env.LOG_LEVEL || 'info',
+  level: process.env.LOG_LEVEL || 'debug',
 };
 
 if (process.env.NODE_ENV === 'development') {
