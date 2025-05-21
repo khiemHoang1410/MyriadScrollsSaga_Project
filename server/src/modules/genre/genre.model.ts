@@ -24,8 +24,7 @@ const GenreSchema = new Schema<IGenre>(
     },
     slug: {
       type: String,
-      // required: [true, 'Genre slug is required.'], // << TẠM THỜI COMMENT DÒNG NÀY
-      default: () => `temp-slug-<span class="math-inline">\{Date\.now\(\)\}\-</span>{Math.random().toString(36).substring(7)}`, // HOẶC THÊM DEFAULT TẠM
+      required: [true, 'Genre slug is required.'], // << TẠM THỜI COMMENT DÒNG NÀY
       unique: true,
       trim: true,
       lowercase: true,
@@ -50,8 +49,6 @@ const GenreSchema = new Schema<IGenre>(
 
 
 // --- Indexes ---
-GenreSchema.index({ name: 1 }); // Index theo tên để tìm kiếm nhanh
-GenreSchema.index({ slug: 1 }); // Index theo slug
 GenreSchema.index({ isActive: 1 }); // Thêm index cho isActive nếu hay query theo trường này
 
 GenreSchema.pre<IGenre>('save', function (next) {

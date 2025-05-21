@@ -67,7 +67,7 @@ export const httpLogger = pinoHttp({
     const { statusCode } = res;
     const responseTime = res.responseTime; // pino-http tự thêm cái này
     if (statusCode === 404) {
-      return `=> ${method} ${url} --> ❓ ${statusCode} Not Found (${responseTime} ms)`;
+      return `=> ${method} ${url} -->  ${statusCode} Not Found (${responseTime} ms)`;
     }
     return `=> ${method} ${url} -->  ${statusCode} (${responseTime} ms)`;
   },
@@ -75,7 +75,7 @@ export const httpLogger = pinoHttp({
     const { method, url } = req;
     const { statusCode } = res;
     const responseTime = res.responseTime;
-    return `=> ${method} ${url} --> ❌ ${statusCode} (${responseTime} ms) - Error: ${err.message}`;
+    return `=> ${method} ${url} -->  ${statusCode} (${responseTime} ms) - Error: ${err.message}`;
   },
   // Để làm cho log HTTP có ID request thống nhất với log thường (nếu cần)
   // genReqId: function (req, res) {

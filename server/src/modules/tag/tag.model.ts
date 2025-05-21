@@ -48,8 +48,7 @@ const TagSchema = new Schema<ITag>(
 );
 
 // --- Indexes ---
-TagSchema.index({ name: 1 });
-TagSchema.index({ slug: 1 });
+
 TagSchema.index({ usageCount: -1 }); // Index usageCount để sau này lấy tag phổ biến
 
 // --- Pre-save Hook to auto-generate slug from name ---

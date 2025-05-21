@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/genres', genreRoutes);
-app.use('/api/tag',tagRoutes)
+app.use('/api/tags',tagRoutes)
 // app.use('/api/books', bookRoutes); // Ví dụ khi có module book
 
 // Route test cơ bản
