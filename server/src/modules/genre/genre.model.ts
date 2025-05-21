@@ -37,7 +37,6 @@ const GenreSchema = new Schema<IGenre>(
     isActive: {
       type: Boolean,
       default: true,
-      index: true, // << ĐẶT INDEX TRỰC TIẾP Ở ĐÂY
     },
   },
   {
@@ -48,9 +47,7 @@ const GenreSchema = new Schema<IGenre>(
 );
 
 // --- Indexes ---
-GenreSchema.index({ name: 1 }); // Index cho name (Mongoose cũng tự tạo cho unique field)
-// GenreSchema.index({ slug: 1 }); // Mongoose tự tạo index cho unique field nếu cần
-// Bỏ dòng GenreSchema.index({ isActive: 1 }); vì đã khai báo index: true ở trên
+GenreSchema.index({ isActive: 1 });
 
 // --- Pre-save Hook "chuẩn" cho Genre (tương tự TagModel) ---
 GenreSchema.pre<IGenre>('save', function(next) {

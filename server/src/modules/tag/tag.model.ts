@@ -42,7 +42,6 @@ const TagSchema = new Schema<ITag>(
     isActive: { // << THÊM TRƯỜNG isActive
       type: Boolean,
       default: true, // Mặc định là true khi tạo mới
-      index: true,   // Nên index nếu thường xuyên query/filter theo trường này
     },
   },
   {
@@ -53,9 +52,9 @@ const TagSchema = new Schema<ITag>(
 );
 
 // --- Indexes ---
-TagSchema.index({ name: 1 });
+// TagSchema.index({ name: 1 });
 TagSchema.index({ usageCount: -1 });
-// TagSchema.index({ isActive: 1 }); // Đã có trong định nghĩa trường isActive ở trên
+TagSchema.index({ isActive: 1 }); 
 
 // --- Pre-save Hook "chuẩn" (giữ nguyên như phiên bản hoạt động tốt trước đó) ---
 TagSchema.pre<ITag>('save', function(next) {

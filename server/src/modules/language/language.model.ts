@@ -5,8 +5,8 @@ import mongoose, { Document, Schema, model } from 'mongoose';
 export interface ILanguage extends Document {
   name: string;         // Tên ngôn ngữ bằng tiếng Anh, ví dụ: "English", "Vietnamese"
   code: string;         // Mã ngôn ngữ theo chuẩn (ví dụ: ISO 639-1 như "en", "vi"), duy nhất
-  nativeName?: string;  // Tên ngôn ngữ bằng tiếng bản địa, ví dụ: "English", "Tiếng Việt"
-  flagIconUrl?: string; // URL đến icon lá cờ (tùy chọn)
+  nativeName?: string | null;  // Tên ngôn ngữ bằng tiếng bản địa, ví dụ: "English", "Tiếng Việt"
+  flagIconUrl?: string | null; // URL đến icon lá cờ (tùy chọn)
   isActive: boolean;    // Ngôn ngữ này có đang được kích hoạt để sử dụng không (ví dụ: cho phép tạo sách mới bằng ngôn ngữ này)
   // createdAt, updatedAt sẽ được Mongoose tự động thêm
 }
@@ -40,6 +40,7 @@ const LanguageSchema = new Schema<ILanguage>(
     isActive: { // Admin có thể bật/tắt ngôn ngữ này cho việc tạo sách mới
       type: Boolean,
       default: true,
+      index: true,
     },
   },
   {
@@ -50,9 +51,6 @@ const LanguageSchema = new Schema<ILanguage>(
 );
 
 // --- Indexes ---
-LanguageSchema.index({ name: 1 });
-LanguageSchema.index({ code: 1 }); // Mã code là unique và quan trọng
-LanguageSchema.index({ isActive: 1 });
 
 const LanguageModel = model<ILanguage>('Language', LanguageSchema);
 
