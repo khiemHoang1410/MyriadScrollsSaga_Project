@@ -2,14 +2,13 @@
 import express, { Application, Request, Response } from 'express';
 import dotenv from 'dotenv'; // Đảm bảo dotenv được gọi sớm nếu chưa có ở đâu khác
 dotenv.config(); // Gọi ở đây hoặc ở server.ts trước khi import app
-import { asyncHandler } from '@/utils'; // << Bro đã có cái này rồi
 
 import { connectDB, httpLogger, logger } from '@/config'; // Sử dụng barrel file
 import { errorHandler, validateResource } from '@/middleware'; // Sử dụng barrel file
 
 // Import routes 
 
-import { genreModule, tagModule, languageModule,authModule, userModule } from '@/modules';
+import { genreModule, tagModule, languageModule,authModule, userModule, bookModule } from '@/modules';
 import TempTestModel from '@/modules/tempTest/tempTest.model'; 
 
 
@@ -28,6 +27,7 @@ app.use('/api/genres', genreModule.genreRoutes);
 app.use('/api/genres', genreModule.genreRoutes);
 app.use('/api/tags',tagModule.tagRoutes)
 app.use('/api/languages', languageModule.languageRoutes);
+app.use('/api/books', bookModule.bookRoutes); // << THÊM DÒNG NÀY
 
 
 // Route test cơ bản
