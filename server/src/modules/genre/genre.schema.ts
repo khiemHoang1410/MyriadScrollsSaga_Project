@@ -2,7 +2,7 @@
 import { z } from 'zod';
 import { generateSlug } from '@/utils/slugify.util';
 
-const SLUG_VALIDATION_MESSAGE_GENRE = // Đổi tên message cho rõ ràng
+const SLUG_VALIDATION_MESSAGE_GENRE = 
   'Genre name must be able to form a valid slug (e.g., contain letters or numbers). It cannot consist only of special characters that are removed during slug generation.';
 
 export const createGenreSchema = z.object({
@@ -14,7 +14,7 @@ export const createGenreSchema = z.object({
       .trim()
       .min(1, 'Genre name cannot be empty.')
       .max(100, 'Genre name cannot exceed 100 characters.')
-      .refine((val) => generateSlug(val).length > 0, { // << Đảm bảo có refine này
+      .refine((val) => generateSlug(val).length > 0, { 
         message: SLUG_VALIDATION_MESSAGE_GENRE,
       }),
     description: z

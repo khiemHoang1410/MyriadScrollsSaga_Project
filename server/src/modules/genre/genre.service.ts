@@ -35,8 +35,7 @@ export const createGenre = async (input: CreateGenreInput): Promise<IGenre> => {
     logger.error('SERVICE DB ERROR: dbError message:', dbError.message);
     logger.error('SERVICE DB ERROR: dbError code (if any):', dbError.code);
     logger.error('SERVICE DB ERROR: dbError keyPattern (if any):', dbError.keyPattern);
-    // Nếu là ValidationError từ Mongoose (ví dụ hook ném lỗi), dbError.name sẽ là 'ValidationError'
-    // và dbError.errors sẽ chứa chi tiết
+
     if (dbError.name === 'ValidationError') {
         // Lấy message lỗi từ ValidationError cho rõ ràng hơn
         const messages = Object.values(dbError.errors).map((val: any) => val.message).join(', ');
@@ -57,7 +56,6 @@ export const createGenre = async (input: CreateGenreInput): Promise<IGenre> => {
 
 /**
  * Lấy tất cả các Genre.
- * Có thể mở rộng để hỗ trợ pagination, filtering, sorting sau này.
  * @returns Mảng các Genre
  */
 export const getAllGenres = async (): Promise<IGenre[]> => {

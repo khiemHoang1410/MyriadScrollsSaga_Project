@@ -8,11 +8,9 @@ import { connectDB, httpLogger, logger } from '@/config'; // Sử dụng barrel 
 import { errorHandler, validateResource } from '@/middleware'; // Sử dụng barrel file
 
 // Import routes 
-import authRoutes from '@/routes/authRoutes'; // Hiện tại vẫn giữ đường dẫn này
-import adminRoutes from '@/routes/adminRoutes'; // Hiện tại vẫn giữ đường dẫn này
 
-import { genreModule, tagModule, languageModule } from '@/modules';
-import TempTestModel from '@/modules/tempTest/tempTest.model'; // << THÊM IMPORT NÀY (đường dẫn có thể cần điều chỉnh nếu bro đặt file ở chỗ khác)
+import { genreModule, tagModule, languageModule,authModule, userModule } from '@/modules';
+import TempTestModel from '@/modules/tempTest/tempTest.model'; 
 
 
 const app: Application = express();
@@ -24,8 +22,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/auth', authModule.authRoutes); 
+app.use('/api/users', userModule.userRoutes); 
+app.use('/api/genres', genreModule.genreRoutes);
 app.use('/api/genres', genreModule.genreRoutes);
 app.use('/api/tags',tagModule.tagRoutes)
 app.use('/api/languages', languageModule.languageRoutes);
