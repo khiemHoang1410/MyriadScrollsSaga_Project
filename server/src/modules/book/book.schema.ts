@@ -241,7 +241,7 @@ export const updateBookSchema = z.object({
         coverImageUrl: z.string().trim().url({ message: 'Invalid URL for cover image.' }).nullable().optional(),
         genres: z.array(z.string().refine(val => /^[0-9a-fA-F]{24}$/.test(val), { message: 'Invalid Genre ID format.' })).optional(),
         tags: z.array(z.string().refine(val => /^[0-9a-fA-F]{24}$/.test(val), { message: 'Invalid Tag ID format.' })).optional(),
-        bookLanguage: z.string({ required_error: 'Book language ID is required.' }).refine(val => /^[0-9a-fA-F]{24}$/.test(val), { message: 'Invalid Language ID format.' }),
+        bookLanguage: z.string().refine(val => /^[0-9a-fA-F]{24}$/.test(val), { message: 'Invalid Language ID format.' }).optional(),
         status: z.nativeEnum(BookStatus).optional(),
         estimatedReadingTime: z.number().int().min(0).nullable().optional(),
         difficulty: z.nativeEnum(BookDifficulty).nullable().optional(),

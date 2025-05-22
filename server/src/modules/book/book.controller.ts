@@ -1,5 +1,5 @@
 // src/modules/book/book.controller.ts
-import { Response, Request } from 'express'; // Import Request gốc từ Express
+import { Response, Request } from 'express';
 import * as bookService from './book.service';
 import {
   CreateBookInput,
@@ -7,7 +7,7 @@ import {
   UpdateBookParams,
   BookIdParams,
   GetAllBooksQueryInput,
-  // Các schema cho PageNode, Choice nếu bro làm API riêng cho chúng
+  // Các schema cho PageNode, Choice nếu làm API riêng
   // PageNodeInput,
   // PageNodeIdParams,
   // ChoiceInput,
@@ -39,18 +39,20 @@ export const getAllBooksHandler = async (
   req: AuthRequestWithParams<{}, {}, {}, GetAllBooksQueryInput>,
   res: Response
 ): Promise<void> => {
-  const currentUserId = req.user?.userId; // Có thể null nếu route này public và user chưa đăng nhập
+  const currentUserId = req.user?.userId; 
   const currentUserRoles = req.user?.roles; // Tương tự
+  
+  const queryParams = req.validatedQuery || req.query;
 
-  const result = await bookService.getAllBooks(req.query, currentUserId, currentUserRoles);
+  const result = await bookService.getAllBooks(queryParams as GetAllBooksQueryInput, currentUserId, currentUserRoles);
   res.status(HttpStatus.OK).json({
     message: GeneralMessages.RETRIEVED_SUCCESS,
     data: result.books,
     meta: {
         totalBooks: result.totalBooks,
         totalPages: result.totalPages,
-        currentPage: result.currentPage,
-        limit: req.query.limit || 10, // Lấy limit từ query hoặc default trong service
+        currentPage: (queryParams as GetAllBooksQueryInput).page || 1, // Lấy từ queryParams đã validate
+        limit: (queryParams as GetAllBooksQueryInput).limit || 10,    // Lấy từ queryParams đã validate
     }
   });
 };

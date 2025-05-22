@@ -296,10 +296,10 @@ export const updateBookById = async (
     }
 
     // 1. Kiểm tra quyền cập nhật
-    const isAuthor = book.author.toString() === currentUserId;
+    // const isAuthor = book.author.toString() === currentUserId;
     const isAdmin = currentUserRoles.includes(UserRole.ADMIN);
 
-    if (!isAuthor && !isAdmin) {
+    if ( !isAdmin) {
         throw new AppError('You do not have permission to update this book.', HttpStatus.FORBIDDEN);
     }
 
@@ -412,10 +412,10 @@ export const deleteBookById = async (
     }
 
     // 1. Kiểm tra quyền xóa
-    const isAuthor = book.author.toString() === currentUserId;
+    // const isAuthor = book.author.toString() === currentUserId;
     const isAdmin = currentUserRoles.includes(UserRole.ADMIN);
 
-    if (!isAuthor && !isAdmin) {
+    if ( !isAdmin) {
         throw new AppError('You do not have permission to delete this book.', HttpStatus.FORBIDDEN);
     }
 
