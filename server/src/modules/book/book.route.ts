@@ -51,4 +51,11 @@ router.delete(
   asyncHandler(bookController.deleteBookByIdHandler)
 );
 
+
+router.get(
+  '/:bookId/play', // Endpoint để bắt đầu hoặc tiếp tục chơi sách
+  authenticateToken, // Cần biết user nào đang chơi
+  validateResource(bookIdParamsSchema), // Validate bookId trong path
+  asyncHandler(bookController.playBookHandler) // Handler sẽ được tạo ở controller
+);
 export default router;

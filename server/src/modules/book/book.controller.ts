@@ -7,6 +7,7 @@ import {
   UpdateBookParams,
   BookIdParams,
   GetAllBooksQueryInput,
+  PlayChoiceParams,
   // Các schema cho PageNode, Choice nếu làm API riêng
   // PageNodeInput,
   // PageNodeIdParams,
@@ -113,22 +114,52 @@ export const deleteBookByIdHandler = async (
   });
 };
 
-// --- (Tùy chọn) Controller Handlers cho quản lý PageNode, Choice riêng lẻ ---
-// Ví dụ:
-// export const addPageNodeHandler = async (
-//   req: AuthRequestWithParams<{ bookId: string }, {}, PageNodeInput>, // PageNodeInput cần được định nghĩa trong book.schema.ts
-//   res: Response
-// ): Promise<void> => {
-//   const { bookId } = req.params;
-//   const currentUserId = req.user?.userId;
-//   const currentUserRoles = req.user?.roles;
-//   if (!currentUserId || !currentUserRoles) {
-//     res.status(HttpStatus.UNAUTHORIZED).json({ message: 'User not authenticated.' });
-//     return;
-//   }
-//   // Gọi service tương ứng, ví dụ:
-//   // const newNode = await bookService.addPageNodeToBook(bookId, currentUserId, currentUserRoles, req.body);
-//   // res.status(HttpStatus.CREATED).json({ message: 'Page node added successfully!', data: newNode });
-// };
+//TODO-- (Tùy chọn) Controller Handlers cho quản lý PageNode, Choice riêng lẻ ---
 
+
+// THÊM CONTROLLER HANDLER MỚI
+export const playBookHandler = async (
+  req: AuthRequestWithParams<BookIdParams>, // BookIdParams là type cho req.params
+  res: Response
+): Promise<void> => {
+  // Lấy bookId từ params đã được validate
+  // Nếu bro đã sửa validateResource để dùng req.validatedParams thì dùng nó
+  const { bookId } = (req as any).validatedParams || req.params; 
+  
+  const userId = req.user!.userId; // Đã qua authenticateToken nên req.user phải có
+  const userRoles = req.user!.roles;
+
+  // Gọi service function tương ứng
+  const playState = await bookService.startOrGetPlayState(bookId, userId, userRoles);
+
+  res.status(HttpStatus.OK).json({
+    message: 'Successfully started or retrieved play state.',
+    data: playState,
+  });
+};
+
+
+export const makeChoiceHandler = async (
+  req: AuthRequestWithParams<PlayChoiceParams>, // Sử dụng PlayChoiceParams
+  res: Response
+): Promise<void> => {
+  // const { bookId, nodeId, choiceId } = req.params; // Nếu không dùng validatedParams
+  const { bookId, nodeId, choiceId } = (req as any).validatedParams || req.params;
+  
+  const userId = req.user!.userId;
+  const userRoles = req.user!.roles; // Có thể cần nếu admin có quyền đặc biệt khi chơi
+
+  const nextPlayState = await bookService.processPlayerChoice(
+    bookId,
+    userId,
+    nodeId, // nodeId của node hiện tại (nơi user chọn choice)
+    choiceId,
+    userRoles
+  );
+
+  res.status(HttpStatus.OK).json({
+    message: 'Choice processed successfully.',
+    data: nextPlayState, // Trả về IPlayStateOutput tương tự như API /play
+  });
+};
 // Tương tự cho updatePageNodeHandler, removePageNodeHandler, và các handler cho Choices

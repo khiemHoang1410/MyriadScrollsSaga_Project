@@ -1,5 +1,6 @@
 // src/modules/index.ts
 export * as bookModule from './book';
+export * as progressModule from './progress';
 
 export * as genreModule from './genre';
 export * as tagModule from './tag';

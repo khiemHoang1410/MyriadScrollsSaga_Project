@@ -111,7 +111,50 @@ export interface IPageNode extends Document {
   choices?: Types.DocumentArray<IChoice>;
   autoNavigateToNodeId?: string | null;
 }
+// --- Interfaces for Plain Objects ---
 
+export interface IPlainContentBlock { // Không extends Document
+  type: ContentBlockType;
+  value: any;
+  characterName?: string | null;
+  characterAvatar?: string | null;
+}
+
+export interface IPlainChoiceCondition { // Không extends Document
+  variableName: string;
+  operator: ChoiceConditionOperator;
+  comparisonValue?: any;
+}
+
+export interface IPlainChoiceEffect { // Không extends Document
+  variableName: string;
+  operator: ChoiceEffectOperator;
+  value?: any;
+}
+export interface IPlainChoice { // Không extends Document
+  choiceId: string;
+  text: string;
+  nextNodeId: string;
+  conditions?: IPlainChoiceCondition[]; // Dùng IPlainChoiceCondition
+  effects?: IPlainChoiceEffect[];     // Dùng IPlainChoiceEffect
+  isHiddenInitially?: boolean;
+  feedbackText?: string | null;
+}
+export interface IPlainPageNode { // Không extends Document
+  nodeId: string;
+  title?: string | null;
+  nodeType: PageNodeType;
+  contentBlocks: IPlainContentBlock[]; // Dùng IPlainContentBlock
+  choices?: IPlainChoice[];           // Dùng IPlainChoice
+  autoNavigateToNodeId?: string | null;
+}
+export interface IPlainStoryVariableDefinition { // Không extends Document
+  name: string;
+  type: StoryVariableType;
+  initialValue: any;
+  scope: StoryVariableScope;
+  description?: string | null;
+}
 export interface IStoryVariableDefinition extends Document {
   name: string;
   type: StoryVariableType;
@@ -126,10 +169,10 @@ export interface IBook extends Document {
   slug: string;
   description?: string | null;
   coverImageUrl?: string | null;
-  author: Types.ObjectId; // ref 'User'
-  genres: Types.ObjectId[]; // ref 'Genre'
-  tags: Types.ObjectId[];   // ref 'Tag'
-  bookLanguage: Types.ObjectId; // << ĐỔI TÊN TỪ language
+  author: Types.ObjectId;
+  genres: Types.ObjectId[];
+  tags: Types.ObjectId[];
+  bookLanguage: Types.ObjectId;
   status: BookStatus;
   publishedAt?: Date | null;
   contentUpdatedAt: Date;
@@ -143,6 +186,32 @@ export interface IBook extends Document {
   storyNodes: Types.DocumentArray<IPageNode>;
   storyVariables?: Types.DocumentArray<IStoryVariableDefinition>;
 }
+
+export type ILeanBook = Omit<IBook, 'storyNodes' | 'storyVariables' | '$isDocumentArrayElement' | 'toObject' | 'toJSON' | 'save' | 'populate' /* ... các methods khác của Document ...*/ > & {
+  _id: Types.ObjectId; // Giữ là ObjectId nếu .lean() không tự chuyển
+  storyNodes: IPlainPageNode[];
+  storyVariables?: IPlainStoryVariableDefinition[]; // << SỬ DỤNG IPlain...
+  author: any; 
+  genres: any[]; // Có thể type chặt hơn là PopulatedGenre[] nếu bro có interface đó
+  tags: any[];   
+  bookLanguage: any; 
+  title: string;
+  slug: string;
+  description?: string | null;
+  coverImageUrl?: string | null;
+  status: BookStatus;
+  publishedAt?: Date | null;
+  contentUpdatedAt: Date;
+  version: number;
+  averageRating: number;
+  totalRatings: number;
+  viewsCount: number;
+  estimatedReadingTime?: number | null;
+  difficulty?: BookDifficulty | null;
+  startNodeId: string;
+  createdAt: Date; 
+  updatedAt: Date;
+};
 
 // --- Mongoose Schemas for Subdocuments ---
 const ContentBlockSchema = new Schema<IContentBlock>({

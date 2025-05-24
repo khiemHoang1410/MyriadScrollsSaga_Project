@@ -296,3 +296,13 @@ export type BookIdParams = z.infer<typeof bookIdParamsSchema>['params'];
 //   }),
 // });
 // export type ChoiceIdParams = z.infer<typeof choiceIdParamsSchema>['params'];
+
+
+export const playChoiceParamsSchema = z.object({
+    params: z.object({
+      bookId: z.string().refine(val => /^[0-9a-fA-F]{24}$/.test(val), { message: 'Invalid Book ID format.' }),
+      nodeId: z.string().min(1, 'Node ID cannot be empty.'),
+      choiceId: z.string().min(1, 'Choice ID cannot be empty.'),
+    }),
+  });
+  export type PlayChoiceParams = z.infer<typeof playChoiceParamsSchema>['params'];
