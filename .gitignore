@@ -44,7 +44,6 @@ Thumbs.db
 
 # Vite specific
 .vite/
-# client/.vite/ # Thường không cần vì .vite nằm ở gốc project Vite
 
 # TypeScript cache
 *.tsbuildinfo
