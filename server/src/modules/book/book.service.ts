@@ -10,6 +10,18 @@ import TagModel from '@/modules/tag/tag.model';
 import { logger } from '@/config';
 import { UserBookProgressModel } from '../progress';
 
+
+
+export interface IPlayStateOutput {
+    bookId: string;
+    currentNode: IPlainPageNode;
+    availableChoices: IPlainChoice[];
+    variablesState: Record<string, any>;
+    isBookCompletedOverall?: boolean;
+    currentEndingId?: string | null;
+}
+
+
 // Helper function để kiểm tra sự tồn tại của các IDs (có thể tách ra utils)
 async function validateDocumentIds(model: mongoose.Model<any>, ids: string[] | undefined | null, idName: string, entityName: string): Promise<void> {
     if (!ids || ids.length === 0) return;
@@ -48,6 +60,7 @@ const processContentPlaceholders = (content: string, variables: Map<string, any>
         return variables.has(trimmedVarName) ? String(variables.get(trimmedVarName)) : match; // Giữ nguyên match nếu không tìm thấy biến
     });
 };
+
 const checkChoiceConditions = (choice: IPlainChoice, variables: Map<string, any>): boolean => {
     if (!choice.conditions || choice.conditions.length === 0) {
         return true;
@@ -81,14 +94,6 @@ const checkChoiceConditions = (choice: IPlainChoice, variables: Map<string, any>
     return true;
 };
 
-export interface IPlayStateOutput {
-    bookId: string;
-    currentNode: IPlainPageNode;
-    availableChoices: IPlainChoice[];
-    variablesState: Record<string, any>;
-    isBookCompletedOverall?: boolean;
-    currentEndingId?: string | null;
-}
 
 export const createBook = async (input: CreateBookInput, authorId: string): Promise<IBook> => {
     const { title, bookLanguage, genres, tags, storyNodes, storyVariables, ...restInput } = input;
@@ -599,206 +604,221 @@ export const startOrGetPlayState = async (
     };
 };
 
+// << FUNCTION ĐỂ ÁP DỤNG EFFECTS >>
 
 const applyChoiceEffects = (
-    effects: IPlainChoiceEffect[] | undefined, // Choice effects là plain objects
-    currentVariables: Map<string, any>
-): Map<string, any> => {
+    effects: IPlainChoiceEffect[] | undefined, // Nhận vào mảng các plain effect objects
+    currentVariables: Map<string, any> // Map JS chứa trạng thái biến hiện tại
+): Map<string, any> => { // Trả về Map JS mới đã được cập nhật
     if (!effects || effects.length === 0) {
-        return currentVariables;
+        return currentVariables; // Không có effect thì trả về trạng thái cũ
     }
 
-    const newVariables = new Map(currentVariables); // Tạo bản sao để thay đổi
+    const newVariables = new Map(currentVariables); // Tạo bản sao để không thay đổi trực tiếp map cũ
 
     effects.forEach(effect => {
         const varName = effect.variableName;
-        const currentValue = newVariables.get(varName);
-        const effectValue = effect.value; // Giá trị từ effect definition
+        const currentValue = newVariables.get(varName); // Lấy giá trị hiện tại của biến từ bản sao
+        const effectValue = effect.value; // Giá trị từ định nghĩa effect (có thể là số, chuỗi, boolean)
 
-        logger.debug(`Applying effect: var [${varName}], operator [${effect.operator}], value [${effectValue}], currentValue [${currentValue}]`);
+        logger.debug(`Applying effect: Variable [${varName}], Operator [${effect.operator}], EffectValue [${effectValue}], CurrentValue [${currentValue}]`);
 
         switch (effect.operator) {
             case ChoiceEffectOperator.SET:
                 newVariables.set(varName, effectValue);
                 break;
-            case ChoiceEffectOperator.ADD: // Giả định là số
+            case ChoiceEffectOperator.ADD:
                 if (typeof currentValue === 'number' && typeof effectValue === 'number') {
                     newVariables.set(varName, currentValue + effectValue);
-                } else {
-                    logger.warn(`Effect ADD failed: variable [${varName}] or effect value is not a number.`);
+                } else if (currentValue === undefined && typeof effectValue === 'number') { // Nếu biến chưa có, coi như là 0 + effectValue
+                    newVariables.set(varName, effectValue);
+                }
+                else {
+                    logger.warn(`Effect ADD failed: Variable [${varName}] (current: ${currentValue}) or EffectValue [${effectValue}] is not a number or setup incorrectly.`);
                 }
                 break;
-            case ChoiceEffectOperator.SUBTRACT: // Giả định là số
+            case ChoiceEffectOperator.SUBTRACT:
                 if (typeof currentValue === 'number' && typeof effectValue === 'number') {
                     newVariables.set(varName, currentValue - effectValue);
+                } else if (currentValue === undefined && typeof effectValue === 'number') { // Nếu biến chưa có, coi như là 0 - effectValue
+                    newVariables.set(varName, -effectValue);
                 } else {
-                    logger.warn(`Effect SUBTRACT failed: variable [${varName}] or effect value is not a number.`);
+                    logger.warn(`Effect SUBTRACT failed: Variable [${varName}] (current: ${currentValue}) or EffectValue [${effectValue}] is not a number or setup incorrectly.`);
                 }
                 break;
-            case ChoiceEffectOperator.INCREMENT: // Giả định là số
+            case ChoiceEffectOperator.INCREMENT:
                 if (typeof currentValue === 'number') {
                     newVariables.set(varName, currentValue + 1);
                 } else {
-                    newVariables.set(varName, 1); // Hoặc khởi tạo nếu chưa có
-                    logger.warn(`Effect INCREMENT applied to non-number or undefined variable [${varName}], set to 1.`);
+                    newVariables.set(varName, 1); // Nếu biến chưa có hoặc không phải số, khởi tạo là 1
+                    logger.warn(`Effect INCREMENT on non-number or undefined variable [${varName}], set to 1.`);
                 }
                 break;
-            case ChoiceEffectOperator.DECREMENT: // Giả định là số
+            case ChoiceEffectOperator.DECREMENT:
                 if (typeof currentValue === 'number') {
                     newVariables.set(varName, currentValue - 1);
                 } else {
-                    newVariables.set(varName, -1); // Hoặc khởi tạo nếu chưa có
-                    logger.warn(`Effect DECREMENT applied to non-number or undefined variable [${varName}], set to -1.`);
+                    newVariables.set(varName, -1); // Nếu biến chưa có hoặc không phải số, khởi tạo là -1
+                    logger.warn(`Effect DECREMENT on non-number or undefined variable [${varName}], set to -1.`);
                 }
                 break;
-            case ChoiceEffectOperator.TOGGLE_BOOLEAN: // Giả định là boolean
+            case ChoiceEffectOperator.TOGGLE_BOOLEAN:
                 if (typeof currentValue === 'boolean') {
                     newVariables.set(varName, !currentValue);
                 } else {
-                    newVariables.set(varName, true); // Mặc định là true nếu chưa có hoặc không phải boolean
-                    logger.warn(`Effect TOGGLE_BOOLEAN applied to non-boolean or undefined variable [${varName}], set to true.`);
+                    newVariables.set(varName, true); // Nếu biến chưa có hoặc không phải boolean, mặc định toggle thành true
+                    logger.warn(`Effect TOGGLE_BOOLEAN on non-boolean or undefined variable [${varName}], set to true.`);
                 }
                 break;
-            case ChoiceEffectOperator.PUSH: // Giả định là mảng
+            case ChoiceEffectOperator.PUSH: // Thêm phần tử vào mảng
+                const currentArrayPush = Array.isArray(currentValue) ? [...currentValue] : [];
+                currentArrayPush.push(effectValue);
+                newVariables.set(varName, currentArrayPush);
+                break;
+            case ChoiceEffectOperator.PULL: // Xóa tất cả các lần xuất hiện của phần tử khỏi mảng
                 if (Array.isArray(currentValue)) {
-                    newVariables.set(varName, [...currentValue, effectValue]);
+                    newVariables.set(varName, currentValue.filter(item => item != effectValue)); // Dùng != để có thể so sánh giá trị cơ bản
                 } else {
-                    newVariables.set(varName, [effectValue]); // Khởi tạo mảng mới nếu chưa có
-                }
-                break;
-            case ChoiceEffectOperator.PULL: // Giả định là mảng
-                if (Array.isArray(currentValue)) {
-                    newVariables.set(varName, currentValue.filter(item => item != effectValue)); // Dùng so sánh không nghiêm ngặt
+                     logger.warn(`Effect PULL failed: Variable [${varName}] is not an array.`);
                 }
                 break;
             default:
-                logger.warn(`Unsupported effect operator: ${effect.operator} for variable ${varName}`);
+                logger.warn(`Unsupported effect operator: [${effect.operator}] for variable [${varName}]`);
         }
         logger.debug(`Variable [${varName}] after effect: [${newVariables.get(varName)}]`);
     });
     return newVariables;
 };
 
-
+// <<SERVICE ĐỂ XỬ LÝ PLAYER CHOICE >>
 export const processPlayerChoice = async (
     bookId: string,
     userId: string,
-    currentNodeIdFromPlayer: string, // Node ID mà player đang ở khi họ chọn choice
+    currentNodeIdFromPlayer: string,
     selectedChoiceId: string,
-    userRoles: UserRole[] // Có thể dùng để check quyền đặc biệt nếu có
+    userRoles: UserRole[] // Có thể dùng để check quyền đặc biệt nếu admin chơi thử
 ): Promise<IPlayStateOutput> => {
-    logger.debug(`User [${userId}] on book [${bookId}], node [${currentNodeIdFromPlayer}], selected choice [${selectedChoiceId}]`);
+    logger.debug(`User [${userId}] on book [${bookId}], from node [${currentNodeIdFromPlayer}], selected choice [${selectedChoiceId}]`);
 
-    // 1. Lấy sách và UserBookProgress
+    // 1. Lấy Sách và UserBookProgress
     const book = await BookModel.findById(bookId).lean() as ILeanBook | null;
     if (!book) {
+        logger.warn(`Book not found: [${bookId}] during choice processing for user [${userId}]`);
         throw new AppError(GeneralMessages.NOT_FOUND + ': Book not found.', HttpStatus.NOT_FOUND);
     }
 
-    const userProgress = await UserBookProgressModel.findOne({ userId: new Types.ObjectId(userId), bookId: new Types.ObjectId(bookId) });
+    // Sách phải published trừ khi là admin (logic tương tự startOrGetPlayState)
+    const isAdmin = userRoles.includes(UserRole.ADMIN);
+    if (book.status !== BookStatus.PUBLISHED && !isAdmin) {
+         logger.warn(`User [${userId}] attempted to make choice on non-published book [${bookId}]`);
+        throw new AppError('This book is not currently available for playing.', HttpStatus.FORBIDDEN);
+    }
+
+    let userProgress = await UserBookProgressModel.findOne({ userId: new Types.ObjectId(userId), bookId: new Types.ObjectId(bookId) });
     if (!userProgress) {
-        // Lỗi này không nên xảy ra nếu user đã qua API /play/start
-        logger.error(`Critical: UserBookProgress not found for user [${userId}], book [${bookId}] when making a choice.`);
-        throw new AppError('Player progress not found. Please start or resume playing the book first.', HttpStatus.BAD_REQUEST);
+        logger.error(`Critical: UserBookProgress not found for user [${userId}], book [${bookId}] when making a choice. User should have started play first.`);
+        throw new AppError('Player progress not found. Please start playing the book first.', HttpStatus.BAD_REQUEST);
     }
 
-    // Đảm bảo node hiện tại của player khớp với node trong progress đã lưu
+    // Kiểm tra xem currentNodeId mà player gửi lên có khớp với currentNodeId đã lưu trong progress không
+    // Đây là một bước bảo mật quan trọng để tránh user "nhảy cóc" node.
     if (userProgress.currentNodeId !== currentNodeIdFromPlayer) {
-        logger.warn(`Mismatch: Player claims to be on node [${currentNodeIdFromPlayer}] but progress shows [${userProgress.currentNodeId}]. Using progress data.`);
-        // Có thể trả về lỗi hoặc dùng currentNodeId từ userProgress
-        // Hiện tại, tin tưởng vào currentNodeIdFromPlayer từ client, nhưng cần cẩn thận
-        // Tốt hơn là dùng userProgress.currentNodeId
+        logger.warn(`Node mismatch for user [${userId}], book [${bookId}]: Client on [${currentNodeIdFromPlayer}], Server progress on [${userProgress.currentNodeId}].`);
+        // Trả về lỗi hoặc trả về trạng thái của node mà server đang lưu (userProgress.currentNodeId)
+        // Tạm thời trả lỗi để client biết có sự không đồng bộ.
+        throw new AppError('Current game state mismatch. Please refresh or restart.', HttpStatus.CONFLICT);
     }
-    const actualCurrentNodeId = userProgress.currentNodeId || book.startNodeId; // Lấy từ progress
 
-    // 2. Tìm PageNode hiện tại và Choice đã chọn
+    // 2. Tìm PageNode hiện tại và Choice đã chọn trong sách
     const storyNodesArray: IPlainPageNode[] = book.storyNodes;
-    const currentPlayerNode = findNodeById(storyNodesArray, actualCurrentNodeId);
+    const currentPlayerNode = findNodeById(storyNodesArray, userProgress.currentNodeId); // Luôn lấy node từ progress đã lưu
     if (!currentPlayerNode) {
-        logger.error(`Current node [${actualCurrentNodeId}] for choice processing not found in book [${bookId}].`);
+        logger.error(`Current node [${userProgress.currentNodeId}] (from progress) for choice processing not found in book [${bookId}].`);
         throw new AppError('Current page node data is corrupted or missing.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     const selectedChoice = (currentPlayerNode.choices || []).find(c => c.choiceId === selectedChoiceId);
     if (!selectedChoice) {
-        logger.warn(`Selected choiceId [${selectedChoiceId}] not found in node [${actualCurrentNodeId}] of book [${bookId}].`);
+        logger.warn(`Selected choiceId [${selectedChoiceId}] not found in current node [${userProgress.currentNodeId}] of book [${bookId}].`);
         throw new AppError('Invalid choice selected.', HttpStatus.BAD_REQUEST);
     }
 
-    // 3. Lấy và kiểm tra `conditions` của Choice
+    // 3. Lấy và kiểm tra `conditions` của Choice đã chọn
     let currentVariablesStateMap = new Map<string, any>();
     if (userProgress.variablesState) {
         currentVariablesStateMap = new Map(userProgress.variablesState.entries());
     }
 
     if (!checkChoiceConditions(selectedChoice, currentVariablesStateMap)) {
-        logger.warn(`User [${userId}] failed condition check for choice [${selectedChoiceId}] on node [${actualCurrentNodeId}].`);
+        logger.warn(`User [${userId}] failed condition check for choice [${selectedChoiceId}] on node [${userProgress.currentNodeId}]. Variables: ${JSON.stringify(Object.fromEntries(currentVariablesStateMap))}`);
         throw new AppError('This choice is not currently available due to unmet conditions.', HttpStatus.FORBIDDEN);
     }
 
-    // 4. Áp dụng `effects`
+    // 4. Áp dụng `effects` của Choice
     const updatedVariablesStateMap = applyChoiceEffects(selectedChoice.effects, currentVariablesStateMap);
 
-    // 5. Xác định nextNodeId và cập nhật UserBookProgress
+    // 5. Xác định nextNodeId và Cập nhật UserBookProgress
     const nextNodeId = selectedChoice.nextNodeId;
+
     userProgress.currentNodeId = nextNodeId;
     userProgress.variablesState = Object.fromEntries(updatedVariablesStateMap) as any; // Gán lại object
-    if (!userProgress.completedNodes.includes(actualCurrentNodeId)) { // Chỉ thêm nếu chưa có
-        userProgress.completedNodes.push(actualCurrentNodeId);
+    if (!userProgress.completedNodes.includes(currentPlayerNode.nodeId)) {
+        userProgress.completedNodes.push(currentPlayerNode.nodeId);
     }
     userProgress.lastPlayedAt = new Date();
-
-    // Nếu node tiếp theo là ending node, cập nhật completedEndings và isCompletedOverall
+    
     const nextNodeForEndingCheck = findNodeById(storyNodesArray, nextNodeId);
     if (nextNodeForEndingCheck && nextNodeForEndingCheck.nodeType === PageNodeType.ENDING) {
         if (!userProgress.completedEndings.includes(nextNodeId)) {
             userProgress.completedEndings.push(nextNodeId);
         }
-        userProgress.isCompletedOverall = true; // Hoặc có logic phức tạp hơn để xác định hoàn thành tổng thể
+        userProgress.isCompletedOverall = true; // Hoặc logic phức tạp hơn
         logger.info(`User [${userId}] reached ending [${nextNodeId}] in book [${bookId}].`);
     }
 
     await userProgress.save();
-    logger.info(`User [${userId}] progress updated for book [${bookId}]. New node: [${nextNodeId}]`);
+    logger.info(`User [${userId}] progress updated for book [${bookId}]. New current node: [${nextNodeId}]`);
 
-    // 6. Lấy PageNode tiếp theo và chuẩn bị dữ liệu trả về (tương tự startOrGetPlayState)
+    // 6. Lấy PageNode tiếp theo và chuẩn bị dữ liệu trả về
     const nextPageNode = findNodeById(storyNodesArray, nextNodeId);
     if (!nextPageNode) {
-        logger.error(`Next node ID [${nextNodeId}] from choice [${selectedChoiceId}] not found in book [${bookId}]. This is a story logic error.`);
-        // Có thể là một "ending" không tường minh hoặc lỗi thiết kế truyện
-        // Trả về lỗi hoặc một trạng thái "kẹt" đặc biệt
-        throw new AppError('The story path is broken or has reached an unexpected end.', HttpStatus.INTERNAL_SERVER_ERROR);
+        logger.error(`Next node ID [${nextNodeId}] (from choice [${selectedChoiceId}]) not found in book [${bookId}]. This indicates a story logic error.`);
+        // Đây có thể là một kết thúc không tường minh hoặc lỗi thiết kế của người viết truyện
+        // Trong trường hợp này, có thể coi là một dạng "ending" hoặc báo lỗi.
+        // Tạm thời báo lỗi nghiêm trọng để người viết truyện biết và sửa.
+        throw new AppError('The story path is broken or has reached an unexpected end. Please contact the author.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    // Xử lý content và choices cho node tiếp theo
     const processedNextContentBlocks = nextPageNode.contentBlocks.map(block => {
-        let value = block.value;
-        if ((block.type === ContentBlockType.TEXT || block.type === ContentBlockType.DIALOGUE) && typeof block.value === 'string') {
-            value = processContentPlaceholders(block.value, updatedVariablesStateMap);
-        }
-        return { ...block, value };
+      let value = block.value;
+      if ((block.type === ContentBlockType.TEXT || block.type === ContentBlockType.DIALOGUE) && typeof block.value === 'string') {
+        value = processContentPlaceholders(block.value, updatedVariablesStateMap);
+      }
+      return { ...block, value }; // block đã là plain object
     });
 
     const availableNextChoices = (nextPageNode.choices || [])
-        .filter(choice => checkChoiceConditions(choice, updatedVariablesStateMap))
-        .map(choice => choice as IPlainChoice);
+      .filter(choice => checkChoiceConditions(choice, updatedVariablesStateMap)) // choice đã là plain object
+      .map(choice => choice as IPlainChoice);
 
     const nextVariablesStateObject: Record<string, any> = {};
     updatedVariablesStateMap.forEach((value, key) => {
-        nextVariablesStateObject[key] = value;
+      nextVariablesStateObject[key] = value;
     });
 
     const plainNextNodeWithProcessedContent: IPlainPageNode = {
         ...(nextPageNode as IPlainPageNode),
         contentBlocks: processedNextContentBlocks as IPlainContentBlock[],
-        choices: availableNextChoices
+        choices: availableNextChoices // Gán lại choices đã được xử lý và filter
     };
 
     return {
-        bookId: book._id.toString(),
-        currentNode: plainNextNodeWithProcessedContent,
-        availableChoices: availableNextChoices,
-        variablesState: nextVariablesStateObject,
-        isBookCompletedOverall: userProgress.isCompletedOverall,
-        currentEndingId: nextPageNode.nodeType === PageNodeType.ENDING ? nextPageNode.nodeId : null,
+      bookId: book._id.toString(),
+      currentNode: plainNextNodeWithProcessedContent,
+      availableChoices: availableNextChoices,
+      variablesState: nextVariablesStateObject,
+      isBookCompletedOverall: userProgress.isCompletedOverall,
+      currentEndingId: nextPageNode.nodeType === PageNodeType.ENDING ? nextPageNode.nodeId : null,
     };
 };

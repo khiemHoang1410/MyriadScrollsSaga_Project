@@ -8,6 +8,7 @@ import {
   updateBookSchema,
   bookIdParamsSchema,
   getAllBooksSchema,
+  playChoiceParamsSchema,
 } from './book.schema';
 import { UserRole } from '@/modules/user/user.model'; // Đảm bảo UserRole được import
 
@@ -58,4 +59,14 @@ router.get(
   validateResource(bookIdParamsSchema), // Validate bookId trong path
   asyncHandler(bookController.playBookHandler) // Handler sẽ được tạo ở controller
 );
+
+
+// << THÊM ROUTE MỚI CHO VIỆC CHỌN CHOICE >>
+router.post(
+  '/:bookId/play/nodes/:nodeId/choices/:choiceId',
+  authenticateToken, // Cần biết user nào đang chơi
+  validateResource(playChoiceParamsSchema), // Validate các params trong path
+  asyncHandler(bookController.makeChoiceHandler) // Handler sẽ tạo ở controller
+);
+
 export default router;
