@@ -24,14 +24,12 @@ router.post(
 
 router.get(
   '/',
-  authenticateToken,
   validateResource(getAllBooksSchema),
   asyncHandler(bookController.getAllBooksHandler)
 );
 
 router.get(
   '/:bookId',
-  authenticateToken,
   validateResource(bookIdParamsSchema),
   asyncHandler(bookController.getBookByIdHandler)
 );

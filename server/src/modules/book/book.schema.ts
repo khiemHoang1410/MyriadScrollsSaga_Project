@@ -110,14 +110,14 @@ const choiceEffectSchema = z.object({
 // Schema cho Choice
 const choiceSchema = z.object({
     choiceId: z.string().trim().min(1, 'Choice ID cannot be empty.')
-                  .default(() => new Types.ObjectId().toHexString()), // Tự sinh nếu client không gửi
+        .default(() => new Types.ObjectId().toHexString()), // Tự sinh nếu client không gửi
     text: z.string({ required_error: 'Choice text is required.' }).trim().min(1, 'Choice text cannot be empty.').max(500, 'Choice text cannot exceed 500 characters.'),
     nextNodeId: z.string({ required_error: 'Next node ID for choice is required.' }).trim().min(1, 'Next node ID cannot be empty.'),
     conditions: z.array(choiceConditionSchema).optional().default([]),
     effects: z.array(choiceEffectSchema).optional().default([]),
     isHiddenInitially: z.boolean().optional().default(false),
     feedbackText: z.string().trim().max(300).nullable().optional(),
-  });
+});
 
 // Schema cho PageNode
 const pageNodeSchema = z.object({
@@ -288,21 +288,13 @@ export type BookIdParams = z.infer<typeof bookIdParamsSchema>['params'];
 // });
 // export type PageNodeIdParams = z.infer<typeof pageNodeIdParamsSchema>['params'];
 
-// export const choiceIdParamsSchema = z.object({
-//   params: z.object({
-//     bookId: z.string().refine(val => /^[0-9a-fA-F]{24}$/.test(val)),
-//     nodeId: z.string().trim().min(1),
-//     choiceId: z.string().trim().min(1),
-//   }),
-// });
-// export type ChoiceIdParams = z.infer<typeof choiceIdParamsSchema>['params'];
 
 
 export const playChoiceParamsSchema = z.object({
     params: z.object({
-      bookId: z.string().refine(val => /^[0-9a-fA-F]{24}$/.test(val), { message: 'Invalid Book ID format.' }),
-      nodeId: z.string().min(1, 'Node ID cannot be empty.'),
-      choiceId: z.string().min(1, 'Choice ID cannot be empty.'),
+        bookId: z.string().refine(val => /^[0-9a-fA-F]{24}$/.test(val), { message: 'Invalid Book ID format.' }),
+        nodeId: z.string().min(1, 'Node ID cannot be empty.'),
+        choiceId: z.string().min(1, 'Choice ID cannot be empty.'),
     }),
-  });
-  export type PlayChoiceParams = z.infer<typeof playChoiceParamsSchema>['params'];
+});
+export type PlayChoiceParams = z.infer<typeof playChoiceParamsSchema>['params'];

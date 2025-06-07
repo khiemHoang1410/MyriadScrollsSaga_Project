@@ -1,6 +1,8 @@
 // server/src/app.ts
 import express, { Application, Request, Response } from 'express';
 import dotenv from 'dotenv'; // Đảm bảo dotenv được gọi sớm nếu chưa có ở đâu khác
+
+import cors from 'cors';
 dotenv.config(); // Gọi ở đây hoặc ở server.ts trước khi import app
 
 import { connectDB, httpLogger, logger } from '@/config'; // Sử dụng barrel file
@@ -14,8 +16,10 @@ import TempTestModel from '@/modules/tempTest/tempTest.model';
 
 const app: Application = express();
 connectDB();
-app.use(httpLogger);
 
+app.use(cors());
+
+app.use(httpLogger);
 // Middlewares để parse JSON và URL-encoded data từ request body
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
