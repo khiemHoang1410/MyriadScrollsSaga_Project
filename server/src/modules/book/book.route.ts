@@ -9,6 +9,7 @@ import {
   bookIdParamsSchema,
   getAllBooksSchema,
   playChoiceParamsSchema,
+  bookSlugParamsSchema,
 } from './book.schema';
 import { UserRole } from '@/modules/user/user.model'; // Đảm bảo UserRole được import
 
@@ -29,8 +30,8 @@ router.get(
 );
 
 router.get(
-  '/:bookId',
-  validateResource(bookIdParamsSchema),
+  '/:slug',
+  validateResource(bookSlugParamsSchema), 
   asyncHandler(bookController.getBookByIdHandler)
 );
 

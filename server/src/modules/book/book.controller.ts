@@ -8,6 +8,7 @@ import {
   BookIdParams,
   GetAllBooksQueryInput,
   PlayChoiceParams,
+  BookSlugParams,
   // Các schema cho PageNode, Choice nếu làm API riêng
   // PageNodeInput,
   // PageNodeIdParams,
@@ -59,14 +60,17 @@ export const getAllBooksHandler = async (
 };
 
 export const getBookByIdHandler = async (
-  req: AuthRequestWithParams<BookIdParams, {}, {}, {}>,
+  req: AuthRequestWithParams<BookSlugParams, {}, {}, {}>, // Dùng type cho slug
   res: Response
 ): Promise<void> => {
-  const { bookId } = req.params;
+  // 1. Lấy ra "slug" từ params, không phải "bookId"
+  const { slug } = req.params;
   const currentUserId = req.user?.userId;
   const currentUserRoles = req.user?.roles;
 
-  const book = await bookService.getBookById(bookId, currentUserId, currentUserRoles);
+  // 2. Gọi hàm service "getBook" (hàm mới) và truyền "slug" vào
+  const book = await bookService.getBook(slug, currentUserId, currentUserRoles);
+  
   res.status(HttpStatus.OK).json({
     message: GeneralMessages.RETRIEVED_SUCCESS,
     data: book,

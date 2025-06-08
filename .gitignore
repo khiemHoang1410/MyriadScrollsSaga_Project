@@ -48,3 +48,4 @@ Thumbs.db
 
 # TypeScript cache
 *.tsbuildinfo
+.gitignore

@@ -86,7 +86,6 @@ const choiceConditionSchema = z.object({
     path: ["comparisonValue"],
 });
 
-
 // Schema cho ChoiceEffect
 const choiceEffectSchema = z.object({
     variableName: z.string({ required_error: 'Effect variable name is required.' }).trim().min(1, 'Effect variable name cannot be empty.'),
@@ -165,8 +164,6 @@ const storyVariableDefinitionSchema = z.object({
     path: ["initialValue"], // Lỗi sẽ được gán cho trường initialValue
 });
 
-
-
 // --- Main Book Schemas ---
 export const getAllBooksSchema = z.object({
     query: z.object({
@@ -189,7 +186,7 @@ export const getAllBooksSchema = z.object({
         searchTerm: z.string().trim().optional(),
     }),
 });
-export type GetAllBooksQueryInput = z.infer<typeof getAllBooksSchema>['query'];
+
 // Schema cho phần body khi tạo sách
 export const createBookSchema = z.object({
     body: z.object({
@@ -219,8 +216,6 @@ export const createBookSchema = z.object({
         storyVariables: z.array(storyVariableDefinitionSchema).optional().default([]),
     }),
 });
-export type CreateBookInput = z.infer<typeof createBookSchema>['body'];
-
 
 // Schema cho phần body khi cập nhật sách
 export const updateBookSchema = z.object({
@@ -253,9 +248,6 @@ export const updateBookSchema = z.object({
         path: ["body"],
     }),
 });
-export type UpdateBookInput = z.infer<typeof updateBookSchema>['body'];
-export type UpdateBookParams = z.infer<typeof updateBookSchema>['params'];
-
 
 // Schema cho params khi chỉ cần bookId
 export const bookIdParamsSchema = z.object({
@@ -265,31 +257,6 @@ export const bookIdParamsSchema = z.object({
 });
 
 
-export type BookIdParams = z.infer<typeof bookIdParamsSchema>['params'];
-
-
-
-
-// --- (Tùy chọn) Schemas cho việc quản lý PageNode, Choice riêng lẻ ---
-// Nếu bro muốn có API để thêm/sửa/xóa một PageNode hoặc Choice cụ thể
-// thay vì cập nhật toàn bộ mảng storyNodes/choices.
-
-// export const pageNodeBodySchema = pageNodeSchema; // Dùng lại pageNodeSchema cho body
-// export type PageNodeInput = z.infer<typeof pageNodeBodySchema>;
-
-// export const choiceBodySchema = choiceSchema; // Dùng lại choiceSchema cho body
-// export type ChoiceInput = z.infer<typeof choiceBodySchema>;
-
-// export const pageNodeIdParamsSchema = z.object({
-//   params: z.object({
-//     bookId: z.string().refine(val => /^[0-9a-fA-F]{24}$/.test(val)),
-//     nodeId: z.string().trim().min(1),
-//   }),
-// });
-// export type PageNodeIdParams = z.infer<typeof pageNodeIdParamsSchema>['params'];
-
-
-
 export const playChoiceParamsSchema = z.object({
     params: z.object({
         bookId: z.string().refine(val => /^[0-9a-fA-F]{24}$/.test(val), { message: 'Invalid Book ID format.' }),
@@ -297,4 +264,18 @@ export const playChoiceParamsSchema = z.object({
         choiceId: z.string().min(1, 'Choice ID cannot be empty.'),
     }),
 });
+
+export const bookSlugParamsSchema = z.object({
+    params: z.object({
+        slug: z.string({ required_error: 'Book slug in params is required.' }),
+    }),
+});
+
+export type BookIdParams = z.infer<typeof bookIdParamsSchema>['params'];
+export type GetAllBooksQueryInput = z.infer<typeof getAllBooksSchema>['query'];
+export type BookSlugParams = z.infer<typeof bookSlugParamsSchema>['params'];
+export type UpdateBookInput = z.infer<typeof updateBookSchema>['body'];
+export type UpdateBookParams = z.infer<typeof updateBookSchema>['params'];
+export type CreateBookInput = z.infer<typeof createBookSchema>['body'];
+
 export type PlayChoiceParams = z.infer<typeof playChoiceParamsSchema>['params'];
