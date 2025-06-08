@@ -1,20 +1,25 @@
-// src/features/book/api.ts
+// src/features/book/api.book.ts
 import { axiosInstance } from '@/shared/api/axiosInstance';
 import type { Book } from './types';
 
+// --- Phần đã có ---
 export interface GetBooksResponse {
   data: Book[];
-  // Có thể có thêm các trường meta (tổng số trang, etc.)
 }
-
-// Định nghĩa kiểu cho params
 export interface GetBooksParams {
   status?: 'published' | 'draft' | 'in_review' | 'archived';
-  // Thêm các param khác nếu cần: authorId, genreIds...
+}
+export const getBooks = async (params: GetBooksParams): Promise<GetBooksResponse> => {
+  const { data } = await axiosInstance.get<GetBooksResponse>('/books', { params });
+  return data;
+};
+
+// --- Phần mới đã thêm ---
+export interface GetBookByIdResponse {
+  data: Book;
 }
 
-export const getBooks = async (params: GetBooksParams): Promise<GetBooksResponse> => {
-  // Chúng ta sẽ tạo query string từ object params
-  const { data } = await axiosInstance.get<GetBooksResponse>('/books', { params });
+export const getBookById = async (identifier: string): Promise<GetBookByIdResponse> => {
+  const { data } = await axiosInstance.get<GetBookByIdResponse>(`/books/${identifier}`);
   return data;
 };

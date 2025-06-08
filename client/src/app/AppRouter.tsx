@@ -4,6 +4,7 @@ import { HomePage } from '@/pages/home';
 import { LoginPage } from '@/pages/login';
 import { DashboardPage } from '@/pages/dashboard'; // <-- Import trang mới
 import { ProtectedRoute } from '@/shared/ui/ProtectedRoute'; // <-- Import component "gác cổng"
+import { BookDetailPage } from '@/pages/book-detail'; 
 
 export const AppRouter = () => {
   return (
@@ -12,6 +13,7 @@ export const AppRouter = () => {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
 
+      <Route path="books/:slug" element={<BookDetailPage/>} />
       {/* Các route được bảo vệ */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardPage />} />
