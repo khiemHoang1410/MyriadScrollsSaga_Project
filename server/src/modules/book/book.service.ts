@@ -161,45 +161,13 @@ export const createBook = async (input: CreateBookInput, authorId: string): Prom
     }
 };
 
-// export const getBookById = async (bookId: string, currentUserId?: string, currentUserRoles?: UserRole[]): Promise<IBook | null> => {
-//     if (!mongoose.Types.ObjectId.isValid(bookId)) {
-//         throw new AppError(GeneralMessages.INVALID_ID_FORMAT + ': Invalid Book ID.', HttpStatus.BAD_REQUEST);
-//     }
-
-//     const book = await BookModel.findById(bookId)
-//         .populate('author', 'username email _id')
-//         .populate('bookLanguage', 'name code _id')
-//         .populate('genres', 'name slug _id')
-//         .populate('tags', 'name slug _id')
-//         .lean() as ILeanBook | null;
-
-//     if (!book) {
-//         throw new AppError(GeneralMessages.NOT_FOUND + ': Book not found.', HttpStatus.NOT_FOUND);
-//     }
-
-//     const isAuthor = currentUserId && book.author && (book.author as any)._id.toString() === currentUserId;
-//     const isAdmin = currentUserRoles && currentUserRoles.includes(UserRole.ADMIN);
-//     // << SỬA LOGIC PHÂN QUYỀN CHO ĐỒNG BỘ MVP >>
-//     if (book.status !== BookStatus.PUBLISHED && !isAdmin) {
-//         throw new AppError('You do not have permission to view this book.', HttpStatus.FORBIDDEN);
-//     }
-//     return book as unknown as IBook;
-// };
 
 export const getBook = async (identifier: string, currentUserId?: string, currentUserRoles?: UserRole[]): Promise<IBook | null> => {
     // --- CÁC DÒNG DEBUG ---
-    console.log('--- DEBUG: Bắt đầu chạy hàm getBook ---');
-    console.log(`[DEBUG] Service nhận được identifier là: "${identifier}"`);
-
     const isObjectId = mongoose.Types.ObjectId.isValid(identifier);
-    console.log(`[DEBUG] Identifier này có phải là ObjectId không? -> ${isObjectId}`);
-
     const query: FilterQuery<IBook> = isObjectId 
         ? { _id: identifier } 
         : { slug: identifier };
-    
-    // In ra câu query sẽ được gửi tới MongoDB
-    console.log('[DEBUG] Câu query được tạo ra là:', JSON.stringify(query));
     
     const book = await BookModel.findOne(query)
         .populate('author', 'username email _id')
@@ -208,12 +176,9 @@ export const getBook = async (identifier: string, currentUserId?: string, curren
         .populate('tags', 'name slug _id')
         .lean<ILeanBook | null>();
 
-    // In ra kết quả từ database
-    console.log('[DEBUG] Kết quả từ database trả về (book object):', book);
     // --- HẾT CÁC DÒNG DEBUG ---
 
     if (!book) {
-        console.error('[DEBUG] Không tìm thấy sách trong database! Sắp báo lỗi 404.');
         throw new AppError(GeneralMessages.NOT_FOUND + ': Book not found.', HttpStatus.NOT_FOUND);
     }
 
@@ -223,8 +188,6 @@ export const getBook = async (identifier: string, currentUserId?: string, curren
     if (book.status !== BookStatus.PUBLISHED && !isAdmin) {
         throw new AppError('You do not have permission to view this book.', HttpStatus.FORBIDDEN);
     }
-
-    console.log(`[DEBUG] Đã tìm thấy sách: "${book.title}". Trả dữ liệu về cho client.`);
     return book as unknown as IBook;
 };
 
