@@ -1,7 +1,7 @@
 // src/modules/book/book.route.ts
 import express from 'express';
 import { asyncHandler } from '@/utils';
-import { validateResource, authenticateToken, authorizeRoles } from '@/middleware'; // Đảm bảo authorizeRoles được import
+import { validateResource, authenticateToken, authorizeRoles,optionalAuthenticateToken  } from '@/middleware'; // Đảm bảo authorizeRoles được import
 import * as bookController from './book.controller';
 import {
   createBookSchema,
@@ -25,16 +25,17 @@ router.post(
 
 router.get(
   '/',
+  optionalAuthenticateToken, // Sử dụng middleware mới
   validateResource(getAllBooksSchema),
   asyncHandler(bookController.getAllBooksHandler)
 );
 
 router.get(
   '/:slug',
+  optionalAuthenticateToken, // Cũng nên thêm vào đây để service có thể check quyền
   validateResource(bookSlugParamsSchema), 
   asyncHandler(bookController.getBookByIdHandler)
 );
-
 router.put(
   '/:bookId',
   authenticateToken,
