@@ -1,44 +1,11 @@
-// src/modules/user/user.route.ts
-import express from 'express';
-import { asyncHandler } from '@/utils';
-import { validateResource, authenticateToken, authorizeRoles } from '@/middleware';
-import * as userController from './user.controller';
-import { createUserSchema, updateUserSchema, userIdParamsSchema } from './user.schema';
-import { UserRole } from './user.model';
+// File: server/src/modules/user/user.route.ts (Sau khi dọn dẹp)
 
-const router = express.Router();
+import { Router } from 'express';
+import { userController } from '@/modules/user'; // <--- Dùng alias
+import { authenticateToken } from '@/middleware'; // <--- Dùng alias
 
-// Tất cả các route trong file này đều yêu cầu xác thực và role ADMIN
-router.use(authenticateToken);
-router.use(authorizeRoles(UserRole.ADMIN));
+const router = Router();
 
-router.post(
-  '/',
-  validateResource(createUserSchema),
-  asyncHandler(userController.createUserHandler)
-);
-
-router.get(
-  '/',
-  asyncHandler(userController.getAllUsersHandler)
-);
-
-router.get(
-  '/:userId',
-  validateResource(userIdParamsSchema),
-  asyncHandler(userController.getUserByIdHandler)
-);
-
-router.put(
-  '/:userId',
-  validateResource(updateUserSchema),
-  asyncHandler(userController.updateUserHandler)
-);
-
-router.delete(
-  '/:userId',
-  validateResource(userIdParamsSchema),
-  asyncHandler(userController.deleteUserHandler)
-);
+router.get('/:userId', authenticateToken, userController.getUserByIdHandler);
 
 export default router;

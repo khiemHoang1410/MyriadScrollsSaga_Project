@@ -13,6 +13,7 @@ import { errorHandler, validateResource } from '@/middleware'; // Sử dụng ba
 import { genreModule, tagModule, languageModule,authModule, userModule, bookModule } from '@/modules';
 import TempTestModel from '@/modules/tempTest/tempTest.model'; 
 
+import adminRouter from '@/modules/admin.router';
 
 const app: Application = express();
 connectDB();
@@ -33,7 +34,7 @@ app.use('/api/tags',tagModule.tagRoutes)
 app.use('/api/languages', languageModule.languageRoutes);
 app.use('/api/books', bookModule.bookRoutes); // << THÊM DÒNG NÀY
 
-
+app.use('/api/admin', adminRouter);
 // Route test cơ bản
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from Myriad Scrolls Saga Backend App! 📜 (DB Connection Attempted!)');
