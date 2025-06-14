@@ -4,3 +4,8 @@ export interface LoginUserInput {
   email: string;
   password: string;
 }
+
+export enum UserRole {
+  USER = 'user',
+  ADMIN = 'admin',
+}

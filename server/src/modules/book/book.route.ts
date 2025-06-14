@@ -36,6 +36,15 @@ router.get(
   validateResource(bookSlugParamsSchema), 
   asyncHandler(bookController.getBookByIdHandler)
 );
+
+// Thêm route mới này cho admin, có bảo vệ
+router.get(
+  '/admin',
+  authenticateToken,
+  authorizeRoles(UserRole.ADMIN),
+  asyncHandler(bookController.getBookByIdHandler)
+);
+
 router.put(
   '/:bookId',
   authenticateToken,

@@ -36,6 +36,7 @@ const generateToken = (user: IUser): string => {
   };
 
   const expiresInSetting: string = process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '1h';
+  console.log('>>> [DEBUG] Token expiration is set to:', expiresInSetting); // << THÊM DÒNG NÀY
 
   const tokenOptions: SignOptions = {
     expiresIn: expiresInSetting as any,

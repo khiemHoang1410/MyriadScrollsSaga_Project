@@ -1,53 +1,47 @@
-// src/widgets/BookList/BookList.tsx
+// File: client/src/widgets/BookList/BookList.tsx (FIXED)
 
 import { useBooks } from '@/features/book/useBooks';
 import { BookCard } from '@/entities/book/BookCard';
-
-// Import các component cần thiết từ MUI
-import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
-import Alert from '@mui/material/Alert';
-import Typography from '@mui/material/Typography';
+import { Spinner } from '@/shared/ui/Spinner';
+import { ErrorMessage } from '@/shared/ui/ErrorMessage';
+import { type Book } from '@/features/book/types'; // Import Book type
+import { Box } from '@mui/material';
 
 export const BookList = () => {
-  // Sửa ở đây: Truyền tham số vào cho useBooks
-  const { data, isLoading, isError, error } = useBooks({ status: 'published' });
+  // SỬA 1: Luôn truyền vào một object cho params, dù là rỗng.
+  // Đồng thời đổi tên `data` thành `booksResponse` để code rõ ràng hơn.
+  const { data: booksResponse, isLoading, isError, error } = useBooks({ status: 'published' });
 
   if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <Spinner />;
   }
 
   if (isError) {
-    const errorMessage = error instanceof Error ? error.message : 'Đã có lỗi không xác định xảy ra.';
-    return <Alert severity="error">Lỗi khi tải danh sách truyện: {errorMessage}</Alert>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return <ErrorMessage message={(error as any)?.message} />;
   }
   
-  const books = data?.data || [];
+  // SỬA 2: Lấy mảng sách từ `booksResponse.data`.
+  // Lỗi "map does not exist" sẽ được khắc phục ở đây.
+  const books = booksResponse?.data || [];
 
-  if (books.length === 0) {
-    return <Typography sx={{ my: 4 }}>Chưa có truyện nào được xuất bản.</Typography>
-  }
-
-  // Sửa ở đây: Dùng Box với display: 'grid' thay cho component Grid
+  // Khi Sửa 2 đã đúng, TypeScript sẽ tự hiểu `book` là kiểu Book
+  // Lỗi "implicitly has an 'any' type" sẽ tự biến mất.
   return (
     <Box
       sx={{
         display: 'grid',
         gridTemplateColumns: {
-          xs: 'repeat(1, 1fr)', // 1 cột trên màn hình nhỏ nhất
-          sm: 'repeat(2, 1fr)', // 2 cột trên màn hình nhỏ
-          md: 'repeat(3, 1fr)', // 3 cột trên màn hình vừa
-          lg: 'repeat(4, 1fr)', // 4 cột trên màn hình lớn
+          xs: 'repeat(1, 1fr)',
+          sm: 'repeat(2, 1fr)',
+          md: 'repeat(3, 1fr)',
+          lg: 'repeat(4, 1fr)',
         },
-        gap: 3, // Khoảng cách giữa các item
+        gap: 3,
       }}
     >
-      {books.map((book) => (
-        <BookCard book={book} key={book._id} />
+      {books.map((book: Book) => (
+        <BookCard key={book._id} book={book} />
       ))}
     </Box>
   );

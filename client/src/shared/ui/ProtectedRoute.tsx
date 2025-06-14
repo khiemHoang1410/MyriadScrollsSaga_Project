@@ -1,17 +1,30 @@
-// src/shared/ui/ProtectedRoute.tsx
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuthStore } from '@/shared/store/authStore';
+// File: client/src/shared/ui/ProtectedRoute.tsx (FINAL FIX)
 
-export const ProtectedRoute = () => {
-  // Lấy token từ store
-  const token = useAuthStore((state) => state.token);
+import React, { type PropsWithChildren } from 'react'; // SỬA: Thêm PropsWithChildren
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
+import { UserRole } from '@/features/auth/types';
 
-  // Nếu có token (đã đăng nhập), cho phép render các component con bên trong
-  // <Outlet /> sẽ là component mà chúng ta bọc (ví dụ: DashboardPage)
-  if (token) {
-    return <Outlet />;
+// SỬA: Dùng PropsWithChildren để khai báo type, không dùng interface nữa
+type ProtectedRouteProps = PropsWithChildren<{
+  allowedRoles: UserRole[];
+}>;
+
+export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
+  const { user, token } = useAuthStore();
+  const location = useLocation();
+
+  if (!token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Nếu không có token, điều hướng người dùng về trang /login
-  return <Navigate to="/login" replace />;
+  const hasRequiredRole = user?.roles.some((role) =>
+    allowedRoles.includes(role as UserRole),
+  );
+
+  if (!hasRequiredRole) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
 };
