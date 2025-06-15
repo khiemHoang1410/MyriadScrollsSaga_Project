@@ -12,6 +12,7 @@ export interface IUser extends Document {
   email: string;
   passwordHash: string;
   roles: UserRole[];
+  refreshToken?: string; // <-- DÒNG MỚI 1: Thêm vào interface
   createdAt?: Date;
   updatedAt?: Date;
 }
