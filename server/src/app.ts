@@ -28,7 +28,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authModule.authRoutes); 
 app.use('/api/users', userModule.userRoutes); 
 app.use('/api/genres', genreModule.genreRoutes);
-app.use('/api/genres', genreModule.genreRoutes);
 app.use('/api/tags',tagModule.tagRoutes)
 app.use('/api/languages', languageModule.languageRoutes);
 app.use('/api/books', bookModule.bookRoutes); // << THÊM DÒNG NÀY

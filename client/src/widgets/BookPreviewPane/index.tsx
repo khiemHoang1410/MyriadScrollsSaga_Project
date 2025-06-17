@@ -3,32 +3,12 @@
 import { Box, Paper, Typography, CardMedia, Divider } from '@mui/material';
 import type { Book } from '@/features/book/types';
 import ImageIcon from '@mui/icons-material/Image'; // Import icon ảnh
+import { ImagePlaceholder } from '@/shared/ui/ImagePlaceholder';
 
 interface BookPreviewPaneProps {
   book: Book | null; // Có thể là null nếu chưa có sách nào được chọn
 }
 
-const ImagePlaceholder = () => (
-  <Box
-    sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: '100%',
-      // Giữ tỉ lệ ảnh 2:3 cho đẹp
-      aspectRatio: '2 / 3',
-      backgroundColor: 'grey.200', // Màu nền xám nhạt
-      borderRadius: 1,
-      mb: 2,
-    }}
-  >
-    <ImageIcon sx={{ fontSize: 60, color: 'grey.500' }} />
-    <Typography variant="caption" color="text.secondary">
-      No Image
-    </Typography>
-  </Box>
-);
 
 export const BookPreviewPane = ({ book }: BookPreviewPaneProps) => {
   // Nếu chưa có sách nào được chọn, hiển thị một thông báo
@@ -63,7 +43,8 @@ export const BookPreviewPane = ({ book }: BookPreviewPaneProps) => {
         />
       ) : (
         // Nếu KHÔNG có link ảnh, render component placeholder của mình
-        <ImagePlaceholder />
+        <ImagePlaceholder sx={{ aspectRatio: '2 / 3', mb: 2 }} />
+
       )}
 
       <Divider sx={{ my: 2 }} />

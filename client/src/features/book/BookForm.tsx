@@ -1,155 +1,160 @@
 // client/src/features/book/BookForm.tsx
 
 import { useEffect } from 'react';
-import { useForm, type SubmitHandler } from 'react-hook-form';
+import { Controller, useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Alert, Box, CircularProgress, Stack, TextField } from '@mui/material';
-import { Button } from '@/shared/ui/Button';
+import {
+  Alert, Box, CircularProgress, Stack, TextField, FormControl,
+  InputLabel, Select, MenuItem, FormHelperText, Autocomplete, Chip
+} from '@mui/material';
+import { Button as CustomButton } from '@/shared/ui/Button';
 
 import { useCreateBook } from './useCreateBook';
 import { useUpdateBook } from './useUpdateBook';
-import type { Book } from './types';
+import type { Book, CreateBookInput } from './types';
+import type { Language } from '../language/types';
+import type { Genre } from '../genre/types';
+import type { Tag } from '../tag/types';
 
-// =================================================================
-// 1. VALIDATION SCHEMA
-// =================================================================
-// Vẫn giữ Zod schema như cũ, ta sẽ mở rộng sau khi thêm các trường khác
+// Zod Schema đã được nâng cấp
 const bookFormSchema = z.object({
-  title: z.string().min(1, { message: 'Tiêu đề là bắt buộc' }),
+  title: z.string().min(1, 'Tiêu đề là bắt buộc'),
   description: z.string().optional(),
-  coverImageUrl: z.string().url({ message: 'URL ảnh bìa không hợp lệ' }).optional().or(z.literal('')),
+  coverImageUrl: z.string().url('URL ảnh bìa không hợp lệ').optional().or(z.literal('')),
+  bookLanguage: z.string().min(1, 'Vui lòng chọn ngôn ngữ'),
+  genres: z.array(z.string()).min(1, 'Chọn ít nhất một thể loại'),
+  tags: z.array(z.string()).optional(),
+  startNodeId: z.string().min(1, 'Cần có ID của node bắt đầu').default('start'),
 });
 
 type BookFormValues = z.infer<typeof bookFormSchema>;
 
-// =================================================================
-// 2. PROPS INTERFACE
-// =================================================================
-/**
- * Props cho BookForm.
- * @param {Book} [initialData] - Dữ liệu sách ban đầu. Nếu có, form sẽ ở chế độ "Chỉnh sửa".
- * @param {string} [bookId] - ID của sách. Cần thiết cho chế độ "Chỉnh sửa".
- */
 interface BookFormProps {
   initialData?: Book;
   bookId?: string;
+  languages?: Language[];
+  genres?: Genre[];
+  tags?: Tag[];
+  isDataLoading?: boolean;
 }
 
-// =================================================================
-// 3. COMPONENT CHÍNH
-// =================================================================
-export const BookForm = ({ initialData, bookId }: BookFormProps) => {
-  // --- A. HOOKS & STATE ---
-  // Xác định chế độ của form: true nếu có initialData (chỉnh sửa), false nếu không (thêm mới)
+export const BookForm = ({ initialData, bookId, languages = [], genres = [], tags = [], isDataLoading }: BookFormProps) => {
   const isEditMode = !!initialData;
 
-  // Gọi các mutation hook mà mình đã tạo
   const { mutate: createBook, isPending: isCreating, error: createError } = useCreateBook();
   const { mutate: updateBook, isPending: isUpdating, error: updateError } = useUpdateBook();
 
-  // Kết hợp trạng thái loading và lỗi từ cả hai mutation
-  const isPending = isCreating || isUpdating;
+  const isPending = isCreating || isUpdating || isDataLoading;
   const error = createError || updateError;
 
-  // --- B. CẤU HÌNH FORM ---
+  // FIX 1: Thêm `control` và `register` vào destructuring
   const {
+    control,
     register,
     handleSubmit,
-    reset, // Lấy thêm hàm reset từ useForm
+    reset,
     formState: { errors },
   } = useForm<BookFormValues>({
     resolver: zodResolver(bookFormSchema),
-    // Set giá trị mặc định cho form. Nếu là chế độ edit, dùng initialData.
-    defaultValues: isEditMode
-      ? {
-          title: initialData.title,
-          description: initialData.description || '',
-          coverImageUrl: initialData.coverImageUrl || '',
-        }
-      : {
-          title: '',
-          description: '',
-          coverImageUrl: '',
-        },
+    defaultValues: {
+      title: initialData?.title || '',
+      description: initialData?.description || '',
+      coverImageUrl: initialData?.coverImageUrl || '',
+      bookLanguage: initialData?.bookLanguage._id || '',
+      genres: initialData?.genres.map(g => g._id) || [],
+      tags: initialData?.tags.map(t => t._id) || [],
+      startNodeId: initialData?.startNodeId || 'start',
+    },
   });
 
-  // useEffect để cập nhật lại form nếu initialData thay đổi (ví dụ khi user chuyển từ trang edit sách A sang B)
+  // FIX 2: useEffect cần reset TẤT CẢ các trường trong form
   useEffect(() => {
     if (initialData) {
       reset({
         title: initialData.title,
         description: initialData.description || '',
         coverImageUrl: initialData.coverImageUrl || '',
+        bookLanguage: initialData.bookLanguage._id,
+        genres: initialData.genres.map(g => g._id),
+        tags: initialData.tags.map(t => t._id),
+        startNodeId: initialData?.startNodeId || 'start',
       });
     }
   }, [initialData, reset]);
 
-
-  // --- C. XỬ LÝ SUBMIT ---
-  // Hàm này sẽ được gọi khi form hợp lệ và được submit
   const onSubmit: SubmitHandler<BookFormValues> = (data) => {
     if (isEditMode && bookId) {
-      // Chế độ chỉnh sửa: gọi mutation updateBook
-      console.log('Updating book with ID:', bookId, 'and data:', data);
       updateBook({ bookId, bookData: data });
     } else {
-      // Chế độ thêm mới: gọi mutation createBook
-      console.log('Creating book with data:', data);
-      // createBook(data); // Bỏ comment khi đã thêm đủ các trường required ở backend
-      alert('Chức năng tạo sách cần thêm các trường bắt buộc như Language, Start Node ID... Sẽ làm ở bước sau!');
+      createBook(data as CreateBookInput);
     }
   };
 
-  // --- D. GIAO DIỆN FORM ---
   return (
     <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3, maxWidth: '800px' }}>
-      <Stack spacing={2}>
+      <Stack spacing={3}>
         {error && <Alert severity="error">{(error as any).message || 'Có lỗi xảy ra'}</Alert>}
 
-        <TextField
-          {...register('title')}
-          label="Tiêu đề sách"
-          fullWidth
-          required
-          margin="normal"
-          error={!!errors.title}
-          helperText={errors.title?.message}
-          disabled={isPending}
+        <TextField {...register('title')} label="Tiêu đề sách *" fullWidth error={!!errors.title} helperText={errors.title?.message} disabled={isPending} />
+        <TextField {...register('coverImageUrl')} label="URL ảnh bìa" fullWidth error={!!errors.coverImageUrl} helperText={errors.coverImageUrl?.message} disabled={isPending} />
+        <TextField {...register('description')} label="Mô tả" fullWidth multiline rows={4} error={!!errors.description} helperText={errors.description?.message} disabled={isPending} />
+
+        <Controller
+          name="bookLanguage"
+          control={control}
+          render={({ field }) => (
+            <FormControl fullWidth error={!!errors.bookLanguage}>
+              <InputLabel id="language-select-label">Ngôn ngữ *</InputLabel>
+              <Select {...field} labelId="language-select-label" label="Ngôn ngữ *" disabled={isPending}>
+                {(languages || []).map((lang) => (<MenuItem key={lang._id} value={lang._id}>{lang.name}</MenuItem>))}
+              </Select>
+              {errors.bookLanguage && <FormHelperText>{errors.bookLanguage.message}</FormHelperText>}
+            </FormControl>
+          )}
         />
 
-        <TextField
-          {...register('coverImageUrl')}
-          label="URL ảnh bìa"
-          fullWidth
-          margin="normal"
-          error={!!errors.coverImageUrl}
-          helperText={errors.coverImageUrl?.message}
-          disabled={isPending}
+        <Controller
+          name="genres"
+          control={control}
+          render={({ field }) => (
+            <Autocomplete
+              multiple
+              options={genres || []}
+              getOptionLabel={(option) => option.name}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              value={field.value.map((id: string) => (genres || []).find(g => g._id === id)).filter(Boolean) as Genre[]}
+              onChange={(_, newValue) => field.onChange(newValue.map(item => item._id))}
+              renderTags={(value, getTagProps) => value.map((option, index) => (<Chip label={option.name} {...getTagProps({ index })} />))}
+              renderInput={(params) => (<TextField {...params} label="Thể loại *" error={!!errors.genres} helperText={errors.genres?.message} />)}
+              disabled={isPending}
+            />
+          )}
         />
 
-        <TextField
-          {...register('description')}
-          label="Mô tả"
-          fullWidth
-          multiline
-          rows={6}
-          margin="normal"
-          error={!!errors.description}
-          helperText={errors.description?.message}
-          disabled={isPending}
+        <Controller
+          name="tags"
+          control={control}
+          render={({ field }) => (
+            <Autocomplete
+              multiple
+              options={tags || []}
+              getOptionLabel={(option) => option.name}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              value={(field.value || []).map((id: string) => (tags || []).find(t => t._id === id)).filter(Boolean) as Tag[]}
+              onChange={(_, newValue) => field.onChange(newValue.map(item => item._id))}
+              renderTags={(value, getTagProps) => value.map((option, index) => (<Chip label={option.name} {...getTagProps({ index })} />))}
+              renderInput={(params) => (<TextField {...params} label="Thẻ (Tags)" />)}
+              disabled={isPending}
+            />
+          )}
         />
 
-        <Button
-          type="submit"
-          variant="contained"
-          size="large"
-          disabled={isPending}
-          sx={{ mt: 2 }}
-          startIcon={isPending ? <CircularProgress size="1rem" color="inherit" /> : null}
-        >
+        <TextField {...register('startNodeId')} label="Start Node ID *" fullWidth required error={!!errors.startNodeId} helperText={errors.startNodeId?.message} disabled={isPending} />
+
+        <CustomButton type="submit" variant="contained" size="large" disabled={isPending} sx={{ mt: 2 }} startIcon={isPending ? <CircularProgress size="1rem" color="inherit" /> : null}>
           {isPending ? 'Đang lưu...' : (isEditMode ? 'Cập nhật sách' : 'Tạo sách mới')}
-        </Button>
+        </CustomButton>
       </Stack>
     </Box>
   );

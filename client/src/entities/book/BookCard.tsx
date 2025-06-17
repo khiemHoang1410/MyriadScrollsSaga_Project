@@ -1,5 +1,6 @@
 // src/entities/book/BookCard.tsx
 import type { Book } from '@/features/book/types';
+import { ImagePlaceholder } from '@/shared/ui/ImagePlaceholder';
 import { Card, CardContent, CardMedia, Typography, Box } from '@mui/material';
 import { Link } from 'react-router-dom';
 
@@ -11,12 +12,17 @@ export const BookCard = ({ book }: BookCardProps) => {
   return (
     <Link to={`/books/${book.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
       <Card sx={{ maxWidth: 345, height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <CardMedia
-          component="img"
-          height="194"
-          image={book.coverImageUrl || 'https://via.placeholder.com/345x194?text=No+Image'}
-          alt={book.title}
-        />
+        {book.coverImageUrl ? (
+          <CardMedia
+            component="img"
+            sx={{ height: 194 }} // Chuyển height vào sx prop
+            image={book.coverImageUrl}
+            alt={book.title}
+          />
+        ) : (
+          // Dùng placeholder với chiều cao cố định
+          <ImagePlaceholder sx={{ height: 194, minHeight: 194 }} />
+        )}
         <CardContent sx={{ flexGrow: 1 }}>
           <Typography gutterBottom variant="h6" component="div">
             {book.title}
