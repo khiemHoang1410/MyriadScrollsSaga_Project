@@ -1,88 +1,156 @@
+// client/src/features/book/BookForm.tsx
+
+import { useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Alert, Box, Button, CircularProgress, TextField } from '@mui/material';
+import { Alert, Box, CircularProgress, Stack, TextField } from '@mui/material';
+import { Button } from '@/shared/ui/Button';
 
-// 1. Định nghĩa "luật" cho form bằng Zod
-// Ví dụ: title là bắt buộc, không được để trống.
+import { useCreateBook } from './useCreateBook';
+import { useUpdateBook } from './useUpdateBook';
+import type { Book } from './types';
+
+// =================================================================
+// 1. VALIDATION SCHEMA
+// =================================================================
+// Vẫn giữ Zod schema như cũ, ta sẽ mở rộng sau khi thêm các trường khác
 const bookFormSchema = z.object({
   title: z.string().min(1, { message: 'Tiêu đề là bắt buộc' }),
-  coverImageUrl: z.string().url({ message: 'URL ảnh bìa không hợp lệ' }).optional().or(z.literal('')),
   description: z.string().optional(),
+  coverImageUrl: z.string().url({ message: 'URL ảnh bìa không hợp lệ' }).optional().or(z.literal('')),
 });
 
-// 2. Tự động suy ra kiểu dữ liệu TypeScript từ schema của Zod
 type BookFormValues = z.infer<typeof bookFormSchema>;
 
-// Props của component, sẽ dùng cho việc edit sau này
+// =================================================================
+// 2. PROPS INTERFACE
+// =================================================================
+/**
+ * Props cho BookForm.
+ * @param {Book} [initialData] - Dữ liệu sách ban đầu. Nếu có, form sẽ ở chế độ "Chỉnh sửa".
+ * @param {string} [bookId] - ID của sách. Cần thiết cho chế độ "Chỉnh sửa".
+ */
 interface BookFormProps {
-  // initialData?: BookFormValues; // Sẽ dùng ở bước sau
-  // onSubmit: SubmitHandler<BookFormValues>; // Sẽ dùng ở bước sau
-  // isPending?: boolean;
-  // error?: Error | null;
+  initialData?: Book;
+  bookId?: string;
 }
 
-export const BookForm = ({}: BookFormProps) => {
-  // 3. Khởi tạo react-hook-form
+// =================================================================
+// 3. COMPONENT CHÍNH
+// =================================================================
+export const BookForm = ({ initialData, bookId }: BookFormProps) => {
+  // --- A. HOOKS & STATE ---
+  // Xác định chế độ của form: true nếu có initialData (chỉnh sửa), false nếu không (thêm mới)
+  const isEditMode = !!initialData;
+
+  // Gọi các mutation hook mà mình đã tạo
+  const { mutate: createBook, isPending: isCreating, error: createError } = useCreateBook();
+  const { mutate: updateBook, isPending: isUpdating, error: updateError } = useUpdateBook();
+
+  // Kết hợp trạng thái loading và lỗi từ cả hai mutation
+  const isPending = isCreating || isUpdating;
+  const error = createError || updateError;
+
+  // --- B. CẤU HÌNH FORM ---
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting }, // Lấy ra errors và trạng thái submit
+    reset, // Lấy thêm hàm reset từ useForm
+    formState: { errors },
   } = useForm<BookFormValues>({
-    resolver: zodResolver(bookFormSchema), // Tích hợp Zod để validation
+    resolver: zodResolver(bookFormSchema),
+    // Set giá trị mặc định cho form. Nếu là chế độ edit, dùng initialData.
+    defaultValues: isEditMode
+      ? {
+          title: initialData.title,
+          description: initialData.description || '',
+          coverImageUrl: initialData.coverImageUrl || '',
+        }
+      : {
+          title: '',
+          description: '',
+          coverImageUrl: '',
+        },
   });
 
-  // 4. Hàm này sẽ được gọi khi form hợp lệ và được submit
+  // useEffect để cập nhật lại form nếu initialData thay đổi (ví dụ khi user chuyển từ trang edit sách A sang B)
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        title: initialData.title,
+        description: initialData.description || '',
+        coverImageUrl: initialData.coverImageUrl || '',
+      });
+    }
+  }, [initialData, reset]);
+
+
+  // --- C. XỬ LÝ SUBMIT ---
+  // Hàm này sẽ được gọi khi form hợp lệ và được submit
   const onSubmit: SubmitHandler<BookFormValues> = (data) => {
-    // Tạm thời chỉ in ra console để kiểm tra
-    console.log('Form data submitted:', data); 
-    // Ở các bước sau, chúng ta sẽ gọi API ở đây
+    if (isEditMode && bookId) {
+      // Chế độ chỉnh sửa: gọi mutation updateBook
+      console.log('Updating book with ID:', bookId, 'and data:', data);
+      updateBook({ bookId, bookData: data });
+    } else {
+      // Chế độ thêm mới: gọi mutation createBook
+      console.log('Creating book with data:', data);
+      // createBook(data); // Bỏ comment khi đã thêm đủ các trường required ở backend
+      alert('Chức năng tạo sách cần thêm các trường bắt buộc như Language, Start Node ID... Sẽ làm ở bước sau!');
+    }
   };
 
+  // --- D. GIAO DIỆN FORM ---
   return (
-    // 5. Gắn handleSubmit vào sự kiện onSubmit của form
     <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3, maxWidth: '800px' }}>
-      
-      <TextField
-        {...register('title')} // 6. Đăng ký input này với react-hook-form
-        label="Tiêu đề sách"
-        fullWidth
-        required
-        margin="normal"
-        error={!!errors.title} // Hiển thị trạng thái lỗi
-        helperText={errors.title?.message} // Hiển thị thông báo lỗi
-      />
-      
-      <TextField
-        {...register('coverImageUrl')}
-        label="URL ảnh bìa"
-        fullWidth
-        margin="normal"
-        error={!!errors.coverImageUrl}
-        helperText={errors.coverImageUrl?.message}
-      />
+      <Stack spacing={2}>
+        {error && <Alert severity="error">{(error as any).message || 'Có lỗi xảy ra'}</Alert>}
 
-      <TextField
-        {...register('description')}
-        label="Mô tả"
-        fullWidth
-        multiline
-        rows={6}
-        margin="normal"
-        error={!!errors.description}
-        helperText={errors.description?.message}
-      />
+        <TextField
+          {...register('title')}
+          label="Tiêu đề sách"
+          fullWidth
+          required
+          margin="normal"
+          error={!!errors.title}
+          helperText={errors.title?.message}
+          disabled={isPending}
+        />
 
-      <Button
-        type="submit"
-        variant="contained"
-        size="large"
-        disabled={isSubmitting} // Vô hiệu hóa nút khi đang gửi
-        sx={{ mt: 2 }}
-        startIcon={isSubmitting ? <CircularProgress size="1rem" color="inherit" /> : null}
-      >
-        {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
-      </Button>
+        <TextField
+          {...register('coverImageUrl')}
+          label="URL ảnh bìa"
+          fullWidth
+          margin="normal"
+          error={!!errors.coverImageUrl}
+          helperText={errors.coverImageUrl?.message}
+          disabled={isPending}
+        />
+
+        <TextField
+          {...register('description')}
+          label="Mô tả"
+          fullWidth
+          multiline
+          rows={6}
+          margin="normal"
+          error={!!errors.description}
+          helperText={errors.description?.message}
+          disabled={isPending}
+        />
+
+        <Button
+          type="submit"
+          variant="contained"
+          size="large"
+          disabled={isPending}
+          sx={{ mt: 2 }}
+          startIcon={isPending ? <CircularProgress size="1rem" color="inherit" /> : null}
+        >
+          {isPending ? 'Đang lưu...' : (isEditMode ? 'Cập nhật sách' : 'Tạo sách mới')}
+        </Button>
+      </Stack>
     </Box>
   );
 };

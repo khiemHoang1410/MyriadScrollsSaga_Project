@@ -25,7 +25,7 @@ type BookDetailParams = {
 
 export const BookDetailPage = () => {
   const { slug } = useParams<BookDetailParams>();
-  const { data: bookResponse, isLoading, isError, error } = useBook(slug);
+  const { data: book, isLoading, isError, error } = useBook(slug);
 
   if (isLoading) {
     return (
@@ -43,7 +43,6 @@ export const BookDetailPage = () => {
     );
   }
 
-  const book = bookResponse?.data;
   const formattedDate = book?.createdAt
     ? new Date(book.createdAt).toLocaleDateString('vi-VN')
     : 'Không rõ';

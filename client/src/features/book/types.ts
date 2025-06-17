@@ -1,30 +1,33 @@
 // client/src/features/book/types.ts
 
-// Định nghĩa các kiểu cho dữ liệu đã được populate từ backend
-// để code của chúng ta rõ ràng và an toàn hơn.
+// 1. Đảm bảo enum BookStatus được export
+export enum BookStatus {
+  DRAFT = 'draft',
+  IN_REVIEW = 'in_review',
+  PUBLISHED = 'published',
+  REJECTED = 'rejected',
+  ARCHIVED = 'archived',
+}
 
+// ... (các interface PopulatedAuthor, PopulatedTerm... giữ nguyên) ...
 export interface PopulatedAuthor {
   _id: string;
   username: string;
-  email?: string; // email có thể có hoặc không tùy vào API
+  email?: string;
 }
-
 export interface PopulatedTerm {
   _id: string;
   name: string;
   slug: string;
 }
-
 export interface PopulatedLanguage {
   _id: string;
   name: string;
   code: string;
 }
 
-/**
- * Interface đầy đủ cho một đối tượng sách (Book)
- * được trả về từ API, bao gồm cả các trường được populate.
- */
+
+// 2. Cập nhật interface Book để dùng BookStatus enum
 export interface Book {
   _id: string;
   title: string;
@@ -35,8 +38,8 @@ export interface Book {
   genres: PopulatedTerm[];
   tags: PopulatedTerm[];
   bookLanguage: PopulatedLanguage;
-  status: 'draft' | 'in_review' | 'published' | 'rejected' | 'archived';
-  publishedAt?: string | null; // Kiểu string vì JSON không có kiểu Date
+  status: BookStatus; // <-- DÙNG ENUM Ở ĐÂY
+  publishedAt?: string | null;
   contentUpdatedAt: string;
   version: number;
   averageRating: number;
@@ -45,11 +48,23 @@ export interface Book {
   estimatedReadingTime?: number | null;
   difficulty?: 'easy' | 'medium' | 'hard' | 'very_hard' | null;
   startNodeId: string;
-  
-  // Chúng ta có thể định nghĩa chi tiết các kiểu này sau khi làm tính năng đọc truyện
-  storyNodes: any[]; 
+  storyNodes: any[];
   storyVariables?: any[];
-  
   createdAt: string;
   updatedAt: string;
 }
+
+// 3. Cập nhật GetBooksParams để dùng BookStatus enum
+export interface GetBooksParams {
+  status?: BookStatus; // <-- DÙNG ENUM Ở ĐÂY
+}
+
+// 4. THÊM `status` VÀO CreateBookInput ĐỂ FIX LỖI
+export interface CreateBookInput {
+  title: string;
+  description?: string;
+  coverImageUrl?: string;
+  status?: BookStatus; // <-- THÊM DÒNG NÀY ĐỂ FIX LỖI
+}
+
+export type UpdateBookInput = Partial<CreateBookInput>;
