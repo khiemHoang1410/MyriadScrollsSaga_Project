@@ -12,6 +12,7 @@ import {
   bookSlugParamsSchema,
 } from './book.schema';
 import { UserRole } from '@/modules/user/user.model'; // Đảm bảo UserRole được import
+import { flexibleAuth } from '@/middleware/flexibleAuth';
 
 const router = express.Router();
 
@@ -25,7 +26,7 @@ router.post(
 
 router.get(
   '/',
-  optionalAuthenticateToken, // Sử dụng middleware mới
+  flexibleAuth, // Sử dụng middleware mới
   validateResource(getAllBooksSchema),
   asyncHandler(bookController.getAllBooksHandler)
 );

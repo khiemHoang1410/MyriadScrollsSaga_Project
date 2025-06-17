@@ -1,4 +1,5 @@
 // src/widgets/BookList/BookList.tsx
+import type { GetBooksParams } from '@/features/book/api.book';
 
 import { useBooks } from '@/features/book/useBooks';
 import { BookCard } from '@/entities/book/BookCard';
@@ -9,9 +10,13 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 
-export const BookList = () => {
+
+interface BookListProps {
+  filters?: GetBooksParams;
+}
+export const BookList = ({ filters = {} }: BookListProps) => {
   // Sửa ở đây: Truyền tham số vào cho useBooks
-  const { data, isLoading, isError, error } = useBooks({ status: 'published' });
+  const { data, isLoading, isError, error } = useBooks(filters);
 
   if (isLoading) {
     return (

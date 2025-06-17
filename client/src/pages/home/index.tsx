@@ -8,7 +8,7 @@ export const HomePage = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         Khám phá các thế giới
       </Typography>
-      <BookList />
+      <BookList filters={{ status: 'published' }}/>
     </div>
   );
 };

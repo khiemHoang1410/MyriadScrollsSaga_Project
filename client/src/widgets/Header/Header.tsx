@@ -1,7 +1,7 @@
 // src/widgets/Header/Header.tsx
 
 import React, { useState } from 'react';
-import { Link, Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Chỉ cần import Link 1 lần
 import { useAuthStore } from '@/shared/store/authStore';
 import {
   AppBar,
@@ -10,12 +10,10 @@ import {
   Box,
   Button,
   IconButton,
-  Container,
   Menu,
   MenuItem,
   Avatar,
 } from '@mui/material';
-import AccountCircle from '@mui/icons-material/AccountCircle';
 
 export const Header = () => {
   const { user, logout } = useAuthStore();
@@ -26,16 +24,6 @@ export const Header = () => {
 
   const isAdmin = user?.roles?.includes('admin');
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    logout();
-    handleMenuClose();
-    navigate('/');
-  };
-
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -43,6 +31,13 @@ export const Header = () => {
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  const handleLogout = () => {
+    logout();
+    handleClose();
+    navigate('/');
+  };
+
   return (
     <AppBar position="static">
       <Toolbar>
@@ -52,7 +47,9 @@ export const Header = () => {
         {user ? (
           <Box>
             <IconButton onClick={handleMenu} sx={{ p: 0 }}>
-              <Avatar alt={user.username} sx={{ width: 32, height: 32 }} />
+              <Avatar alt={user.username} sx={{ width: 32, height: 32, textTransform: 'uppercase' }}>
+                {user.username.charAt(0)}
+              </Avatar>
             </IconButton>
             <Menu
               id="menu-appbar"
@@ -74,18 +71,21 @@ export const Header = () => {
                 <Typography variant="subtitle1">Xin chào, {user.username}</Typography>
               </Box>
 
-              {/* 2. Thêm MenuItem mới, chỉ hiển thị nếu là admin */}
               {isAdmin && (
                 <MenuItem
                   component={Link}
-                  to="/dashboard/manage-books"
+                  // FIX 1: Thêm '/admin' vào giữa cho khớp với AppRouter mới
+                  to="/dashboard/admin/manage-books"
                   onClick={handleClose}
                 >
                   Quản lý Sách
                 </MenuItem>
               )}
 
-              <MenuItem onClick={handleClose}>Tài khoản</MenuItem>
+              {/* FIX 2: Trỏ link "Tài khoản" về trang dashboard chính */}
+              <MenuItem component={Link} to="/dashboard" onClick={handleClose}>
+                Tài khoản
+              </MenuItem>
               <MenuItem onClick={handleLogout}>Đăng xuất</MenuItem>
             </Menu>
           </Box>

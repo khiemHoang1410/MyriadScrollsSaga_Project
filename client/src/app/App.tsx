@@ -1,7 +1,7 @@
 // src/app/App.tsx
 import { Header } from '@/widgets/Header/Header';
 import { AppRouter } from './AppRouter';
-import './styles.css';
+// import './styles.css';
 
 export const App = () => {
     return (

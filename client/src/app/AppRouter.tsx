@@ -10,6 +10,7 @@ import {
 } from '@/pages';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AdminProtectedRoute } from '@/components/AdminProtectedRoute';
+import { RegisterPage } from '@/pages/register';
 
 export const AppRouter = () => {
   return (
@@ -17,6 +18,7 @@ export const AppRouter = () => {
       {/* === CÁC ROUTE CÔNG KHAI === */}
       <Route path="/" element={<HomePage />} />
       <Route path="login" element={<LoginPage />} />
+      <Route path="register" element={<RegisterPage />} /> 
       <Route path="books/:slug" element={<BookDetailPage />} />
 
       {/* === KHU VỰC SAU ĐĂNG NHẬP === */}

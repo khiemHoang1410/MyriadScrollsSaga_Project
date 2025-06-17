@@ -19,7 +19,6 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "module-alias": "^2.2.3",
     "mongoose": "^8.14.2",
     "pino": "^9.6.0",
     "pino-http": "^10.4.0",
