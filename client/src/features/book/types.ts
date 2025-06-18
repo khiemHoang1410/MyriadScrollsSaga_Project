@@ -38,6 +38,7 @@ export interface Book {
   genres: PopulatedTerm[];
   tags: PopulatedTerm[];
   bookLanguage: PopulatedLanguage;
+  fontFamily?: string | null;
   status: BookStatus; // <-- DÙNG ENUM Ở ĐÂY
   publishedAt?: string | null;
   contentUpdatedAt: string;
@@ -65,6 +66,7 @@ export interface CreateBookInput {
   description?: string;
   coverImageUrl?: string;
   status?: BookStatus; // <-- THÊM DÒNG NÀY ĐỂ FIX LỖI
+  fontFamily?: string; 
 }
 
 export type UpdateBookInput = Partial<CreateBookInput>;

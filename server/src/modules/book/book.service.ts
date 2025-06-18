@@ -13,7 +13,7 @@ import { UserBookProgressModel } from '../progress';
 
 
 export interface IPlayStateOutput {
-    bookId: string;
+    book: ILeanBook; // <-- THAY bookId bằng cả object book
     currentNode: IPlainPageNode;
     availableChoices: IPlainChoice[];
     variablesState: Record<string, any>;
@@ -599,7 +599,7 @@ export const startOrGetPlayState = async (
     };
 
     return {
-        bookId: book._id.toString(),
+        book: book,
         currentNode: plainCurrentNodeWithProcessedContent,
         availableChoices,
         variablesState: variablesStateObject,
@@ -817,7 +817,7 @@ export const processPlayerChoice = async (
     };
 
     return {
-        bookId: book._id.toString(),
+        book: book,
         currentNode: plainNextNodeWithProcessedContent,
         availableChoices: availableNextChoices,
         variablesState: nextVariablesStateObject,

@@ -1,3 +1,5 @@
+import type { Book } from "../book";
+
 export interface ContentBlock {
     type: 'text' | 'image' | 'dialogue' | 'audio_sfx' | 'audio_bgm';
     value: any;
@@ -23,10 +25,11 @@ export interface ContentBlock {
   
   // Đây là kiểu dữ liệu cho toàn bộ trạng thái của cuộc chơi
   export interface PlayState {
-    bookId: string;
+    book: Book; 
     currentNode: PageNode;
     availableChoices: Choice[];
     variablesState: Record<string, any>; // Biến của câu chuyện, ví dụ: { score: 10, hasKey: true }
     isBookCompletedOverall?: boolean;
     currentEndingId?: string | null;
+    fontFamily?:string | null;
   }

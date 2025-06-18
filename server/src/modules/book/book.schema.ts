@@ -209,6 +209,7 @@ export const createBookSchema = z.object({
         // contentUpdatedAt: Sẽ được service/model xử lý
         // version: Mặc định trong model
         // averageRating, totalRatings, viewsCount: Mặc định trong model
+        fontFamily: z.string().trim().optional().nullable(), // <-- THÊM DÒNG NÀY
         estimatedReadingTime: z.number().int().min(0).nullable().optional(),
         difficulty: z.nativeEnum(BookDifficulty).nullable().optional(),
         startNodeId: z.string({ required_error: 'Start node ID is required.' }).trim().min(1, 'Start node ID cannot be empty.'),
@@ -243,6 +244,7 @@ export const updateBookSchema = z.object({
         startNodeId: z.string().trim().min(1, 'Start node ID cannot be empty.').optional(),
         storyNodes: z.array(pageNodeSchema).optional(), // Cho phép cập nhật toàn bộ mảng
         storyVariables: z.array(storyVariableDefinitionSchema).optional(), // Cho phép cập nhật toàn bộ mảng
+        fontFamily: z.string().trim().optional().nullable(), // <-- THÊM DÒNG NÀY
     }).refine(data => Object.keys(data).length > 0, {
         message: "Request body for update cannot be empty. At least one field to update must be provided.",
         path: ["body"],

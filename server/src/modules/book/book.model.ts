@@ -185,16 +185,18 @@ export interface IBook extends Document {
   startNodeId: string;
   storyNodes: Types.DocumentArray<IPageNode>;
   storyVariables?: Types.DocumentArray<IStoryVariableDefinition>;
+  fontFamily?: string | null; // <-- THÊM DÒNG NÀY
+
 }
 
-export type ILeanBook = Omit<IBook, 'storyNodes' | 'storyVariables' | '$isDocumentArrayElement' | 'toObject' | 'toJSON' | 'save' | 'populate' /* ... các methods khác của Document ...*/ > & {
+export type ILeanBook = Omit<IBook, 'storyNodes' | 'storyVariables' | '$isDocumentArrayElement' | 'toObject' | 'toJSON' | 'save' | 'populate' /* ... các methods khác của Document ...*/> & {
   _id: Types.ObjectId; // Giữ là ObjectId nếu .lean() không tự chuyển
   storyNodes: IPlainPageNode[];
   storyVariables?: IPlainStoryVariableDefinition[]; // << SỬ DỤNG IPlain...
-  author: any; 
+  author: any;
   genres: any[]; // Có thể type chặt hơn là PopulatedGenre[] nếu bro có interface đó
-  tags: any[];   
-  bookLanguage: any; 
+  tags: any[];
+  bookLanguage: any;
   title: string;
   slug: string;
   description?: string | null;
@@ -209,8 +211,9 @@ export type ILeanBook = Omit<IBook, 'storyNodes' | 'storyVariables' | '$isDocume
   estimatedReadingTime?: number | null;
   difficulty?: BookDifficulty | null;
   startNodeId: string;
-  createdAt: Date; 
+  createdAt: Date;
   updatedAt: Date;
+  fontFamily?: string | null; // <-- THÊM DÒNG NÀY
 };
 
 // --- Mongoose Schemas for Subdocuments ---
@@ -282,7 +285,8 @@ const BookSchema = new Schema<IBook>(
     difficulty: { type: String, enum: Object.values(BookDifficulty), default: null, index: true },
     startNodeId: { type: String, required: [true, 'Start node ID is required.'], trim: true },
     storyNodes: { type: [PageNodeSchema], default: [] },
-     storyVariables: { type: [StoryVariableDefinitionSchema], default: [] },
+    storyVariables: { type: [StoryVariableDefinitionSchema], default: [] },
+    fontFamily: { type: String, trim: true, default: null }, // <-- THÊM KHỐI NÀY
   },
   {
     timestamps: true,
@@ -320,16 +324,16 @@ BookSchema.pre<IBook>('save', function (next) {
     }
   }
   if (this.isNew && !this.slug && this.title) {
-      const fallbackSlug = generateSlug(this.title);
-      if (fallbackSlug) {
-        this.slug = fallbackSlug;
-      } else {
-        // Nếu slug là bắt buộc (như trong schema `required: true`), việc này sẽ gây lỗi khi save nếu title không tạo được slug
-        // Có thể bỏ `required: true` cho slug trong schema và chỉ dựa vào hook + validation ở Zod/Service
-        // Hoặc đảm bảo title luôn có thể tạo slug qua Zod validation
-        logger.error(`[BookModel Pre-Save Hook] CRITICAL: Slug is still missing and could not be generated for new book: "${this.title}".`);
-        return next(new Error(`Critical: Slug could not be generated for title "${this.title}".`));
-      }
+    const fallbackSlug = generateSlug(this.title);
+    if (fallbackSlug) {
+      this.slug = fallbackSlug;
+    } else {
+      // Nếu slug là bắt buộc (như trong schema `required: true`), việc này sẽ gây lỗi khi save nếu title không tạo được slug
+      // Có thể bỏ `required: true` cho slug trong schema và chỉ dựa vào hook + validation ở Zod/Service
+      // Hoặc đảm bảo title luôn có thể tạo slug qua Zod validation
+      logger.error(`[BookModel Pre-Save Hook] CRITICAL: Slug is still missing and could not be generated for new book: "${this.title}".`);
+      return next(new Error(`Critical: Slug could not be generated for title "${this.title}".`));
+    }
   }
 
   next();

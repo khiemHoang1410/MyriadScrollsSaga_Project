@@ -1,7 +1,7 @@
 // client/src/features/book/BookForm.tsx
 
 import { useEffect } from 'react';
-import { Controller, useForm, type SubmitHandler } from 'react-hook-form';
+import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -17,11 +17,12 @@ import type { Language } from '../language/types';
 import type { Genre } from '../genre/types';
 import type { Tag } from '../tag/types';
 
-// Zod Schema đã được nâng cấp
+// Zod Schema hoàn chỉnh
 const bookFormSchema = z.object({
   title: z.string().min(1, 'Tiêu đề là bắt buộc'),
   description: z.string().optional(),
-  coverImageUrl: z.string().url('URL ảnh bìa không hợp lệ').optional().or(z.literal('')),
+  coverImageUrl: z.string().url({ message: 'URL ảnh bìa không hợp lệ' }).optional().or(z.literal('')),
+  fontFamily: z.string().optional(),
   bookLanguage: z.string().min(1, 'Vui lòng chọn ngôn ngữ'),
   genres: z.array(z.string()).min(1, 'Chọn ít nhất một thể loại'),
   tags: z.array(z.string()).optional(),
@@ -48,9 +49,8 @@ export const BookForm = ({ initialData, bookId, languages = [], genres = [], tag
   const isPending = isCreating || isUpdating || isDataLoading;
   const error = createError || updateError;
 
-  // FIX 1: Thêm `control` và `register` vào destructuring
   const {
-    control,
+    control, // Bắt buộc phải có control để dùng với Controller
     register,
     handleSubmit,
     reset,
@@ -61,24 +61,25 @@ export const BookForm = ({ initialData, bookId, languages = [], genres = [], tag
       title: initialData?.title || '',
       description: initialData?.description || '',
       coverImageUrl: initialData?.coverImageUrl || '',
-      bookLanguage: initialData?.bookLanguage._id || '',
-      genres: initialData?.genres.map(g => g._id) || [],
-      tags: initialData?.tags.map(t => t._id) || [],
+      fontFamily: initialData?.fontFamily || '',
+      bookLanguage: initialData?.bookLanguage?._id || '',
+      genres: initialData?.genres?.map(g => g._id) || [],
+      tags: initialData?.tags?.map(t => t._id) || [],
       startNodeId: initialData?.startNodeId || 'start',
     },
   });
 
-  // FIX 2: useEffect cần reset TẤT CẢ các trường trong form
   useEffect(() => {
     if (initialData) {
       reset({
         title: initialData.title,
         description: initialData.description || '',
         coverImageUrl: initialData.coverImageUrl || '',
+        fontFamily: initialData.fontFamily || '',
         bookLanguage: initialData.bookLanguage._id,
         genres: initialData.genres.map(g => g._id),
         tags: initialData.tags.map(t => t._id),
-        startNodeId: initialData?.startNodeId || 'start',
+        startNodeId: initialData.startNodeId || 'start',
       });
     }
   }, [initialData, reset]);
@@ -99,6 +100,7 @@ export const BookForm = ({ initialData, bookId, languages = [], genres = [], tag
         <TextField {...register('title')} label="Tiêu đề sách *" fullWidth error={!!errors.title} helperText={errors.title?.message} disabled={isPending} />
         <TextField {...register('coverImageUrl')} label="URL ảnh bìa" fullWidth error={!!errors.coverImageUrl} helperText={errors.coverImageUrl?.message} disabled={isPending} />
         <TextField {...register('description')} label="Mô tả" fullWidth multiline rows={4} error={!!errors.description} helperText={errors.description?.message} disabled={isPending} />
+        <TextField {...register('fontFamily')} label="Font Family (từ Google Fonts)" fullWidth helperText="Ví dụ: Lora, Merriweather" disabled={isPending} />
 
         <Controller
           name="bookLanguage"
@@ -107,7 +109,7 @@ export const BookForm = ({ initialData, bookId, languages = [], genres = [], tag
             <FormControl fullWidth error={!!errors.bookLanguage}>
               <InputLabel id="language-select-label">Ngôn ngữ *</InputLabel>
               <Select {...field} labelId="language-select-label" label="Ngôn ngữ *" disabled={isPending}>
-                {(languages || []).map((lang) => (<MenuItem key={lang._id} value={lang._id}>{lang.name}</MenuItem>))}
+                {languages.map((lang) => (<MenuItem key={lang._id} value={lang._id}>{lang.name}</MenuItem>))}
               </Select>
               {errors.bookLanguage && <FormHelperText>{errors.bookLanguage.message}</FormHelperText>}
             </FormControl>
@@ -120,13 +122,12 @@ export const BookForm = ({ initialData, bookId, languages = [], genres = [], tag
           render={({ field }) => (
             <Autocomplete
               multiple
-              options={genres || []}
+              options={genres}
               getOptionLabel={(option) => option.name}
               isOptionEqualToValue={(option, value) => option._id === value._id}
-              value={field.value.map((id: string) => (genres || []).find(g => g._id === id)).filter(Boolean) as Genre[]}
+              value={field.value.map(id => genres.find(g => g._id === id)).filter(Boolean) as Genre[]}
               onChange={(_, newValue) => field.onChange(newValue.map(item => item._id))}
-              renderTags={(value, getTagProps) => value.map((option, index) => (<Chip label={option.name} {...getTagProps({ index })} />))}
-              renderInput={(params) => (<TextField {...params} label="Thể loại *" error={!!errors.genres} helperText={errors.genres?.message} />)}
+              renderInput={(params) => <TextField {...params} label="Thể loại *" error={!!errors.genres} helperText={errors.genres?.message} />}
               disabled={isPending}
             />
           )}
@@ -138,13 +139,12 @@ export const BookForm = ({ initialData, bookId, languages = [], genres = [], tag
           render={({ field }) => (
             <Autocomplete
               multiple
-              options={tags || []}
+              options={tags}
               getOptionLabel={(option) => option.name}
               isOptionEqualToValue={(option, value) => option._id === value._id}
-              value={(field.value || []).map((id: string) => (tags || []).find(t => t._id === id)).filter(Boolean) as Tag[]}
+              value={(field.value || []).map(id => tags.find(t => t._id === id)).filter(Boolean) as Tag[]}
               onChange={(_, newValue) => field.onChange(newValue.map(item => item._id))}
-              renderTags={(value, getTagProps) => value.map((option, index) => (<Chip label={option.name} {...getTagProps({ index })} />))}
-              renderInput={(params) => (<TextField {...params} label="Thẻ (Tags)" />)}
+              renderInput={(params) => <TextField {...params} label="Thẻ (Tags)" />}
               disabled={isPending}
             />
           )}
