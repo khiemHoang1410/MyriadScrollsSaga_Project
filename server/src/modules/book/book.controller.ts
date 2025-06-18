@@ -126,15 +126,15 @@ export const playBookHandler = async (
   req: AuthRequestWithParams<BookIdParams>, // BookIdParams là type cho req.params
   res: Response
 ): Promise<void> => {
-  // Lấy bookId từ params đã được validate
+  // Lấy slug  từ params đã được validate
   // Nếu bro đã sửa validateResource để dùng req.validatedParams thì dùng nó
-  const { bookId } = (req as any).validatedParams || req.params; 
+  const { slug  } = (req as any).validatedParams || req.params; 
   
   const userId = req.user!.userId; // Đã qua authenticateToken nên req.user phải có
   const userRoles = req.user!.roles;
 
   // Gọi service function tương ứng
-  const playState = await bookService.startOrGetPlayState(bookId, userId, userRoles);
+  const playState = await bookService.startOrGetPlayState(slug , userId, userRoles);
 
   res.status(HttpStatus.OK).json({
     message: 'Successfully started or retrieved play state.',
@@ -147,14 +147,14 @@ export const makeChoiceHandler = async (
   req: AuthRequestWithParams<PlayChoiceParams>, // Sử dụng PlayChoiceParams
   res: Response
 ): Promise<void> => {
-  // const { bookId, nodeId, choiceId } = req.params; // Nếu không dùng validatedParams
-  const { bookId, nodeId, choiceId } = (req as any).validatedParams || req.params;
+  // const { slug, nodeId, choiceId } = req.params; // Nếu không dùng validatedParams
+  const { slug, nodeId, choiceId } = (req as any).validatedParams || req.params;
   
   const userId = req.user!.userId;
   const userRoles = req.user!.roles; // Có thể cần nếu admin có quyền đặc biệt khi chơi
 
   const nextPlayState = await bookService.processPlayerChoice(
-    bookId,
+    slug,
     userId,
     nodeId, // nodeId của node hiện tại (nơi user chọn choice)
     choiceId,

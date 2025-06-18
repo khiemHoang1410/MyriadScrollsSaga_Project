@@ -165,10 +165,10 @@ export const createBook = async (input: CreateBookInput, authorId: string): Prom
 export const getBook = async (identifier: string, currentUserId?: string, currentUserRoles?: UserRole[]): Promise<IBook | null> => {
     // --- CÁC DÒNG DEBUG ---
     const isObjectId = mongoose.Types.ObjectId.isValid(identifier);
-    const query: FilterQuery<IBook> = isObjectId 
-        ? { _id: identifier } 
+    const query: FilterQuery<IBook> = isObjectId
+        ? { _id: identifier }
         : { slug: identifier };
-    
+
     const book = await BookModel.findOne(query)
         .populate('author', 'username email _id')
         .populate('bookLanguage', 'name code _id')
@@ -184,7 +184,7 @@ export const getBook = async (identifier: string, currentUserId?: string, curren
 
     const isAuthor = currentUserId && book.author && (book.author as any)._id.toString() === currentUserId;
     const isAdmin = currentUserRoles && currentUserRoles.includes(UserRole.ADMIN);
-    
+
     if (book.status !== BookStatus.PUBLISHED && !isAdmin) {
         throw new AppError('You do not have permission to view this book.', HttpStatus.FORBIDDEN);
     }
@@ -484,17 +484,16 @@ export const deleteBookById = async (
 
 // --- SERVICE CHO PLAY LOGIC ---
 export const startOrGetPlayState = async (
-    bookId: string,
+    slug: string,
     userId: string,
     userRoles: UserRole[]
 ): Promise<IPlayStateOutput> => {
-    logger.debug(`User [${userId}] attempting to play/resume book [${bookId}]`); // << SỬA LOG SPAN
 
-    const book = await BookModel.findById(bookId).lean() as ILeanBook | null;
+    const book = await BookModel.findOne({ slug }).lean<ILeanBook | null>();
     if (!book) {
-        logger.warn(`Book not found: [${bookId}] for user [${userId}]`);
         throw new AppError(GeneralMessages.NOT_FOUND + ': Book not found.', HttpStatus.NOT_FOUND);
     }
+    const bookId = book._id.toString();
 
     const isAdmin = userRoles.includes(UserRole.ADMIN);
     // << SỬA ĐIỀU KIỆN CHECK QUYỀN >>
@@ -684,7 +683,7 @@ const applyChoiceEffects = (
                 if (Array.isArray(currentValue)) {
                     newVariables.set(varName, currentValue.filter(item => item != effectValue)); // Dùng != để có thể so sánh giá trị cơ bản
                 } else {
-                     logger.warn(`Effect PULL failed: Variable [${varName}] is not an array.`);
+                    logger.warn(`Effect PULL failed: Variable [${varName}] is not an array.`);
                 }
                 break;
             default:
@@ -697,25 +696,24 @@ const applyChoiceEffects = (
 
 // <<SERVICE ĐỂ XỬ LÝ PLAYER CHOICE >>
 export const processPlayerChoice = async (
-    bookId: string,
+    slug: string,
     userId: string,
     currentNodeIdFromPlayer: string,
     selectedChoiceId: string,
     userRoles: UserRole[] // Có thể dùng để check quyền đặc biệt nếu admin chơi thử
 ): Promise<IPlayStateOutput> => {
-    logger.debug(`User [${userId}] on book [${bookId}], from node [${currentNodeIdFromPlayer}], selected choice [${selectedChoiceId}]`);
 
     // 1. Lấy Sách và UserBookProgress
-    const book = await BookModel.findById(bookId).lean() as ILeanBook | null;
+    const book = await BookModel.findOne({ slug }).lean<ILeanBook | null>();
     if (!book) {
-        logger.warn(`Book not found: [${bookId}] during choice processing for user [${userId}]`);
+        logger.warn(`Book not found: [${slug}] during choice processing for user [${userId}]`);
         throw new AppError(GeneralMessages.NOT_FOUND + ': Book not found.', HttpStatus.NOT_FOUND);
     }
-
+    const bookId = book._id.toString();
     // Sách phải published trừ khi là admin (logic tương tự startOrGetPlayState)
     const isAdmin = userRoles.includes(UserRole.ADMIN);
     if (book.status !== BookStatus.PUBLISHED && !isAdmin) {
-         logger.warn(`User [${userId}] attempted to make choice on non-published book [${bookId}]`);
+        logger.warn(`User [${userId}] attempted to make choice on non-published book [${bookId}]`);
         throw new AppError('This book is not currently available for playing.', HttpStatus.FORBIDDEN);
     }
 
@@ -771,7 +769,7 @@ export const processPlayerChoice = async (
         userProgress.completedNodes.push(currentPlayerNode.nodeId);
     }
     userProgress.lastPlayedAt = new Date();
-    
+
     const nextNodeForEndingCheck = findNodeById(storyNodesArray, nextNodeId);
     if (nextNodeForEndingCheck && nextNodeForEndingCheck.nodeType === PageNodeType.ENDING) {
         if (!userProgress.completedEndings.includes(nextNodeId)) {
@@ -796,20 +794,20 @@ export const processPlayerChoice = async (
 
     // Xử lý content và choices cho node tiếp theo
     const processedNextContentBlocks = nextPageNode.contentBlocks.map(block => {
-      let value = block.value;
-      if ((block.type === ContentBlockType.TEXT || block.type === ContentBlockType.DIALOGUE) && typeof block.value === 'string') {
-        value = processContentPlaceholders(block.value, updatedVariablesStateMap);
-      }
-      return { ...block, value }; // block đã là plain object
+        let value = block.value;
+        if ((block.type === ContentBlockType.TEXT || block.type === ContentBlockType.DIALOGUE) && typeof block.value === 'string') {
+            value = processContentPlaceholders(block.value, updatedVariablesStateMap);
+        }
+        return { ...block, value }; // block đã là plain object
     });
 
     const availableNextChoices = (nextPageNode.choices || [])
-      .filter(choice => checkChoiceConditions(choice, updatedVariablesStateMap)) // choice đã là plain object
-      .map(choice => choice as IPlainChoice);
+        .filter(choice => checkChoiceConditions(choice, updatedVariablesStateMap)) // choice đã là plain object
+        .map(choice => choice as IPlainChoice);
 
     const nextVariablesStateObject: Record<string, any> = {};
     updatedVariablesStateMap.forEach((value, key) => {
-      nextVariablesStateObject[key] = value;
+        nextVariablesStateObject[key] = value;
     });
 
     const plainNextNodeWithProcessedContent: IPlainPageNode = {
@@ -819,11 +817,11 @@ export const processPlayerChoice = async (
     };
 
     return {
-      bookId: book._id.toString(),
-      currentNode: plainNextNodeWithProcessedContent,
-      availableChoices: availableNextChoices,
-      variablesState: nextVariablesStateObject,
-      isBookCompletedOverall: userProgress.isCompletedOverall,
-      currentEndingId: nextPageNode.nodeType === PageNodeType.ENDING ? nextPageNode.nodeId : null,
+        bookId: book._id.toString(),
+        currentNode: plainNextNodeWithProcessedContent,
+        availableChoices: availableNextChoices,
+        variablesState: nextVariablesStateObject,
+        isBookCompletedOverall: userProgress.isCompletedOverall,
+        currentEndingId: nextPageNode.nodeType === PageNodeType.ENDING ? nextPageNode.nodeId : null,
     };
 };

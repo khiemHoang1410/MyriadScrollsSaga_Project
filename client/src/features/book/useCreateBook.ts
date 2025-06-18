@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { createBook } from './api.book';
 import type { CreateBookInput } from './types';
+import { paths } from '@/shared/config/paths';
 
 /**
  * Custom hook để xử lý logic tạo sách mới.
@@ -33,7 +34,7 @@ export const useCreateBook = () => {
       console.log('Sách đã được tạo thành công!');
       
       // Điều hướng người dùng về trang quản lý sách sau khi thành công.
-      navigate('/dashboard/admin/manage-books');
+      navigate(paths.admin.manageBooks);
     },
 
     /**

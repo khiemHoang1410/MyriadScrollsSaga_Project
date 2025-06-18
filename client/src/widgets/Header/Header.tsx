@@ -75,7 +75,7 @@ export const Header = () => {
                 <MenuItem
                   component={Link}
                   // FIX 1: Thêm '/admin' vào giữa cho khớp với AppRouter mới
-                  to="/dashboard/admin/manage-books"
+                  to="/admin/manage-books"
                   onClick={handleClose}
                 >
                   Quản lý Sách

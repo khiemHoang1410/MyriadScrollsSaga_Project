@@ -55,16 +55,16 @@ router.delete(
 
 
 router.get(
-  '/:bookId/play', // Endpoint để bắt đầu hoặc tiếp tục chơi sách
+  '/:slug/play', // Endpoint để bắt đầu hoặc tiếp tục chơi sách
   authenticateToken, // Cần biết user nào đang chơi
-  validateResource(bookIdParamsSchema), // Validate bookId trong path
+  validateResource(bookSlugParamsSchema), // Validate bookId trong path
   asyncHandler(bookController.playBookHandler) // Handler sẽ được tạo ở controller
 );
 
 
 // << THÊM ROUTE MỚI CHO VIỆC CHỌN CHOICE >>
 router.post(
-  '/:bookId/play/nodes/:nodeId/choices/:choiceId',
+  '/:slug/play/nodes/:nodeId/choices/:choiceId',
   authenticateToken, // Cần biết user nào đang chơi
   validateResource(playChoiceParamsSchema), // Validate các params trong path
   asyncHandler(bookController.makeChoiceHandler) // Handler sẽ tạo ở controller

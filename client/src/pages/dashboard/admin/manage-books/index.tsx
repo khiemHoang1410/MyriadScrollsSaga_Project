@@ -23,6 +23,7 @@ import { useDeleteBook } from '@/features/book/useDeleteBook';
 import { useUpdateBook } from '@/features/book/useUpdateBook';
 import { type Book, BookStatus } from '@/features/book/types';
 import { BookPreviewPane } from '@/widgets/BookPreviewPane';
+import { paths } from '@/shared/config/paths';
 
 // =================================================================
 // COMPONENT CHÍNH CỦA TRANG - PHIÊN BẢN TINH GỌN
@@ -99,7 +100,7 @@ export const ManageBooksPage = () => {
       renderCell: (params: GridRenderCellParams<Book>) => (
         <Box>
           <IconButton aria-label="view" title="Xem trang public" onClick={() => navigate(`/books/${params.row.slug}`)}><VisibilityIcon /></IconButton>
-          <IconButton aria-label="edit" title="Chỉnh sửa" onClick={() => navigate(`/dashboard/admin/manage-books/edit/${params.row._id}`)}><EditIcon /></IconButton>
+          <IconButton aria-label="edit" title="Chỉnh sửa" onClick={() => navigate(paths.admin.editBook(params.row._id))}><EditIcon /></IconButton>
           <IconButton aria-label="delete" title="Xóa" color="error" onClick={() => handleOpenDeleteDialog(params.row._id)}><DeleteIcon /></IconButton>
         </Box>
       ),
@@ -119,7 +120,7 @@ export const ManageBooksPage = () => {
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h4" component="h1">Quản lý Sách</Typography>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/dashboard/admin/manage-books/add')}>Thêm Sách Mới</Button>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(paths.admin.addBook)}>Thêm Sách Mới</Button>
         </Box>
 
         <Grid container spacing={3} sx={{ height: { md: 'calc(100vh - 220px)' } }}>

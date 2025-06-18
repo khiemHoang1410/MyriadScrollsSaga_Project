@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { updateBook } from './api.book';
 import type { UpdateBookInput, Book } from './types';
+import { paths } from '@/shared/config/paths';
 
 /**
  * Custom hook để xử lý logic cập nhật một cuốn sách.
@@ -32,7 +33,7 @@ export const useUpdateBook = () => {
       queryClient.invalidateQueries({ queryKey: ['book', updatedBook._id] });
       queryClient.invalidateQueries({ queryKey: ['book', updatedBook.slug] });
 
-      navigate('/dashboard/admin/manage-books');
+      navigate(paths.admin.manageBooks);
     },
     
     onError: (error: Error) => {

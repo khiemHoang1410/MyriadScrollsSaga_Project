@@ -259,7 +259,7 @@ export const bookIdParamsSchema = z.object({
 
 export const playChoiceParamsSchema = z.object({
     params: z.object({
-        bookId: z.string().refine(val => /^[0-9a-fA-F]{24}$/.test(val), { message: 'Invalid Book ID format.' }),
+        slug: z.string().min(1, 'Slug cannot be empty.'),
         nodeId: z.string().min(1, 'Node ID cannot be empty.'),
         choiceId: z.string().min(1, 'Choice ID cannot be empty.'),
     }),

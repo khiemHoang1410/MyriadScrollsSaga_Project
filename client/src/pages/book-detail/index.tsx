@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useBook } from '@/features/book/useBook';
 
 // Import các component từ MUI, lần này chúng ta không dùng Grid
@@ -18,6 +18,7 @@ import StarBorderIcon from '@mui/icons-material/StarBorder';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ThermostatIcon from '@mui/icons-material/Thermostat';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import { paths } from '@/shared/config/paths';
 
 type BookDetailParams = {
   slug: string;
@@ -50,7 +51,7 @@ export const BookDetailPage = () => {
   return (
     <Container sx={{ mt: 4, mb: 4 }}>
       {/* THAY THẾ GRID BẰNG BOX VỚI FLEXBOX */}
-      <Box 
+      <Box
         sx={{
           display: 'flex',
           flexDirection: { xs: 'column', md: 'row' }, // Xếp dọc trên màn nhỏ, ngang trên màn lớn
@@ -105,7 +106,15 @@ export const BookDetailPage = () => {
           <Typography variant="body1" paragraph sx={{ mt: 2 }}>
             {book?.description || 'Chưa có mô tả cho cuốn sách này.'}
           </Typography>
-          <Button variant="contained" color="success" size="large" sx={{ mt: 3 }}>
+          <Button
+            component={Link} // 1. Biến Button thành một thẻ Link
+            to={book ? paths.play(book.slug) : '#'} // 2. Trỏ đến đúng đường dẫn chơi game
+            variant="contained"
+            color="success"
+            size="large"
+            sx={{ mt: 3 }}
+            disabled={!book} // 3. Vô hiệu hóa nếu chưa có data sách
+          >
             Bắt đầu đọc
           </Button>
         </Box>
