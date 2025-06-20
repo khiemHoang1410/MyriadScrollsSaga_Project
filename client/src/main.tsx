@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from './app/App';
 import { AppThemeProvider } from './providers';
 
+import './app/styles/fonts';
+
 const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

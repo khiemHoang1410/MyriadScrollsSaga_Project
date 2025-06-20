@@ -40,7 +40,7 @@ export const validateResource = (schema: AnyZodObject): RequestHandler =>
       // và chỉ xử lý req.query đặc biệt:
       // req.body = parsed.body;
       // req.params = parsed.params;
-      // req.validatedQuery = parsed.query; // Chỉ gán query vào thuộc tính mới
+      req.validatedQuery = parsed.query; // Chỉ gán query vào thuộc tính mới
 
       next();
     } catch (error: any) {

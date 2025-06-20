@@ -9,6 +9,7 @@ import {
     PageNodeType,
     StoryVariableType,
     StoryVariableScope,
+    BookLayoutType,
 } from './book.model'; // Import các enum từ book.model
 import { generateSlug } from '@/utils/slugify.util'; //
 import { Types } from 'mongoose';
@@ -210,6 +211,7 @@ export const createBookSchema = z.object({
         // version: Mặc định trong model
         // averageRating, totalRatings, viewsCount: Mặc định trong model
         fontFamily: z.string().trim().optional().nullable(), // <-- THÊM DÒNG NÀY
+        layoutType: z.nativeEnum(BookLayoutType).optional(), // Optional khi tạo, vì đã có default
         estimatedReadingTime: z.number().int().min(0).nullable().optional(),
         difficulty: z.nativeEnum(BookDifficulty).nullable().optional(),
         startNodeId: z.string({ required_error: 'Start node ID is required.' }).trim().min(1, 'Start node ID cannot be empty.'),
@@ -242,9 +244,10 @@ export const updateBookSchema = z.object({
         estimatedReadingTime: z.number().int().min(0).nullable().optional(),
         difficulty: z.nativeEnum(BookDifficulty).nullable().optional(),
         startNodeId: z.string().trim().min(1, 'Start node ID cannot be empty.').optional(),
-        storyNodes: z.array(pageNodeSchema).optional(), // Cho phép cập nhật toàn bộ mảng
-        storyVariables: z.array(storyVariableDefinitionSchema).optional(), // Cho phép cập nhật toàn bộ mảng
-        fontFamily: z.string().trim().optional().nullable(), // <-- THÊM DÒNG NÀY
+        storyNodes: z.array(pageNodeSchema).optional(),
+        storyVariables: z.array(storyVariableDefinitionSchema).optional(),
+        fontFamily: z.string().trim().optional().nullable(), 
+        layoutType: z.nativeEnum(BookLayoutType).optional(),
     }).refine(data => Object.keys(data).length > 0, {
         message: "Request body for update cannot be empty. At least one field to update must be provided.",
         path: ["body"],

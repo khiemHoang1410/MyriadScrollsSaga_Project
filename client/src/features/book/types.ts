@@ -8,6 +8,11 @@ export enum BookStatus {
   REJECTED = 'rejected',
   ARCHIVED = 'archived',
 }
+// TẠO MỘT ENUM MỚI CHO GIAO DIỆN
+export enum BookLayoutType {
+  LITE_NOVEL = 'lite_novel', // Kiểu tiểu thuyết
+  ADVENTURE_LOG = 'adventure_log', // Kiểu nhật ký phiêu lưu
+}
 
 // ... (các interface PopulatedAuthor, PopulatedTerm... giữ nguyên) ...
 export interface PopulatedAuthor {
@@ -40,6 +45,9 @@ export interface Book {
   bookLanguage: PopulatedLanguage;
   fontFamily?: string | null;
   status: BookStatus; // <-- DÙNG ENUM Ở ĐÂY
+  layoutType: BookLayoutType;
+  
+
   publishedAt?: string | null;
   contentUpdatedAt: string;
   version: number;
@@ -65,7 +73,8 @@ export interface CreateBookInput {
   title: string;
   description?: string;
   coverImageUrl?: string;
-  status?: BookStatus; // <-- THÊM DÒNG NÀY ĐỂ FIX LỖI
+  status?: BookStatus; 
+  layoutType?: BookLayoutType;
   fontFamily?: string; 
 }
 

@@ -353,10 +353,9 @@ export const updateBookById = async (
     if (input.estimatedReadingTime !== undefined) book.estimatedReadingTime = input.estimatedReadingTime;
     if (input.difficulty !== undefined) book.difficulty = input.difficulty;
     if (input.startNodeId !== undefined) book.startNodeId = input.startNodeId;
-
-    if (input.status !== undefined && input.status !== book.status) {
-        book.status = input.status; // publishedAt sẽ được hook trong model xử lý khi lưu
-    }
+    if (input.fontFamily !== undefined) book.fontFamily = input.fontFamily;
+    if (input.status !== undefined && input.status !== book.status) book.status = input.status;
+    if (input.layoutType !== undefined) book.layoutType = input.layoutType;
 
     // Kiểm tra và validate các ID tham chiếu nếu chúng được cập nhật
     if (input.bookLanguage !== undefined && input.bookLanguage !== book.bookLanguage.toString()) { // Đổi tên thành bookLanguage

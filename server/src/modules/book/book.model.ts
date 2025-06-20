@@ -37,6 +37,14 @@ export enum ChoiceEffectOperator {
   TOGGLE_BOOLEAN = 'toggleBoolean',
 }
 
+
+// TẠO MỘT ENUM MỚI CHO GIAO DIỆN
+export enum BookLayoutType {
+  LITE_NOVEL = 'lite_novel', // Kiểu tiểu thuyết
+  ADVENTURE_LOG = 'adventure_log', // Kiểu nhật ký phiêu lưu
+}
+
+
 export enum BookStatus {
   DRAFT = 'draft',
   IN_REVIEW = 'in_review',
@@ -131,6 +139,7 @@ export interface IPlainChoiceEffect { // Không extends Document
   operator: ChoiceEffectOperator;
   value?: any;
 }
+
 export interface IPlainChoice { // Không extends Document
   choiceId: string;
   text: string;
@@ -140,6 +149,7 @@ export interface IPlainChoice { // Không extends Document
   isHiddenInitially?: boolean;
   feedbackText?: string | null;
 }
+
 export interface IPlainPageNode { // Không extends Document
   nodeId: string;
   title?: string | null;
@@ -148,6 +158,7 @@ export interface IPlainPageNode { // Không extends Document
   choices?: IPlainChoice[];           // Dùng IPlainChoice
   autoNavigateToNodeId?: string | null;
 }
+
 export interface IPlainStoryVariableDefinition { // Không extends Document
   name: string;
   type: StoryVariableType;
@@ -155,6 +166,7 @@ export interface IPlainStoryVariableDefinition { // Không extends Document
   scope: StoryVariableScope;
   description?: string | null;
 }
+
 export interface IStoryVariableDefinition extends Document {
   name: string;
   type: StoryVariableType;
@@ -185,7 +197,8 @@ export interface IBook extends Document {
   startNodeId: string;
   storyNodes: Types.DocumentArray<IPageNode>;
   storyVariables?: Types.DocumentArray<IStoryVariableDefinition>;
-  fontFamily?: string | null; // <-- THÊM DÒNG NÀY
+  fontFamily?: string | null;
+  layoutType: BookLayoutType;
 
 }
 
@@ -214,6 +227,7 @@ export type ILeanBook = Omit<IBook, 'storyNodes' | 'storyVariables' | '$isDocume
   createdAt: Date;
   updatedAt: Date;
   fontFamily?: string | null; // <-- THÊM DÒNG NÀY
+  layoutType: BookLayoutType;
 };
 
 // --- Mongoose Schemas for Subdocuments ---
@@ -286,13 +300,15 @@ const BookSchema = new Schema<IBook>(
     startNodeId: { type: String, required: [true, 'Start node ID is required.'], trim: true },
     storyNodes: { type: [PageNodeSchema], default: [] },
     storyVariables: { type: [StoryVariableDefinitionSchema], default: [] },
-    fontFamily: { type: String, trim: true, default: null }, // <-- THÊM KHỐI NÀY
+    fontFamily: { type: String, trim: true, default: null },
+    layoutType: { type: String, enum: Object.values(BookLayoutType), default: BookLayoutType.LITE_NOVEL, required: true, }
   },
   {
     timestamps: true,
     toJSON: { virtuals: true, getters: true },
     toObject: { virtuals: true, getters: true },
   }
+
 );
 
 // --- Indexes ---
