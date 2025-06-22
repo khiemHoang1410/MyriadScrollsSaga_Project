@@ -1,3 +1,7 @@
 export * from "./api.genre"
 export * from "./types"
 export * from "./useGenre"
+export * from "./useUpdateGenre"
+export * from "./useCreateGenre"
+export * from "./useDeleteGenre"
+export * from "./genreForm"

@@ -1,58 +1,47 @@
 // client/src/app/AppRouter.tsx
-import { Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes, Navigate} from 'react-router-dom';
 import {
-  HomePage,
-  LoginPage,
-  RegisterPage,
-  BookDetailPage,
-  DashboardPage,
-  ManageBooksPage,
-  BookEditPage,
-  PlayPage,
-  // NotFoundPage, // Mình có thể tạo trang này sau
+  HomePage, LoginPage, RegisterPage, BookDetailPage, PlayPage,
+  ManageBooksPage, BookEditPage, ManageGenresPage,
+  ManageTagsPage, ManageLanguagesPage,
 } from '@/pages';
-import { ProtectedRoute } from '@/shared/components';
-import { AdminProtectedRoute } from '@/shared/components';
+import { ProtectedRoute, AdminProtectedRoute } from '@/shared/components';
+import { AdminLayout } from '@/widgets/Layout/AdminLayout';
+import { paths } from '@/shared/config/paths';
+import { Typography } from '@mui/material';
 
-// Một component đơn giản cho trang 404
-const NotFoundPage = () => <h1>404: Not Found</h1>;
+const NotFoundPage = () => <Typography variant="h3" textAlign="center" mt={5}>404: Not Found</Typography>;
 
 export const AppRouter = () => {
   return (
     <Routes>
-      {/* ================================= */}
-      {/* 1. PUBLIC ROUTES           */}
-      {/* ================================= */}
-      <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/books/:slug" element={<BookDetailPage />} />
+      {/* ===== PUBLIC ROUTES ===== */}
+      <Route path={paths.home} element={<HomePage />} />
+      <Route path={paths.login} element={<LoginPage />} />
+      <Route path={paths.register} element={<RegisterPage />} />
+      <Route path={paths.bookDetail()} element={<BookDetailPage />} />
 
-      {/* ================================= */}
-      {/* 2. PROTECTED ROUTES (User+)    */}
-      {/* ================================= */}
+      {/* ===== USER PROTECTED ROUTES ===== */}
       <Route element={<ProtectedRoute />}>
-        {/* Trang dashboard chung cho mọi user đã đăng nhập */}
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/play/:slug" element={<PlayPage />} />
+        {/* <Route path={paths.dashboard.root} element={<DashboardPage />} /> */}
+        <Route path={paths.play()} element={<PlayPage />} />
+      </Route>
 
-      {/* ================================= */}
-      {/* 2. PROTECTED ROUTES (ADMIN)    */}
-      {/* ================================= */}
-        <Route path="/admin" element={<AdminProtectedRoute />}>
-        
-          <Route index element={<Navigate to="/admin/manage-books" replace />} />
+      {/* ===== ADMIN PROTECTED ROUTES - CẤU TRÚC MỚI ===== */}
+      <Route element={<AdminProtectedRoute />}>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to={paths.admin.manageBooks} replace />} />
           <Route path="manage-books" element={<ManageBooksPage />} />
           <Route path="manage-books/add" element={<BookEditPage />} />
           <Route path="manage-books/edit/:bookId" element={<BookEditPage />} />
-          {/* Sau này có manage-users thì thêm vào đây */}
+          <Route path="manage-genres" element={<ManageGenresPage />} />
+          <Route path="manage-tags" element={<ManageTagsPage />} />
+          <Route path="manage-languages" element={<ManageLanguagesPage />} />
+          
         </Route>
       </Route>
 
-      {/* ================================= */}
-      {/* 3. NOT FOUND ROUTE         */}
-      {/* ================================= */}
-      {/* Bắt tất cả các đường dẫn không khớp ở trên và hiển thị trang 404 */}
+      {/* NOT FOUND ROUTE */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

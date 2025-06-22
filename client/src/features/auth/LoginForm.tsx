@@ -1,91 +1,74 @@
-// src/features/auth/LoginForm.tsx
-import React, { useState } from 'react';
+// client/src/features/auth/LoginForm.tsx
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Box, Stack, TextField, Typography, Link, Alert } from '@mui/material';
+import { LoadingButton } from '@mui/lab';
 import { useMutation } from '@tanstack/react-query';
-import { Button } from '@/shared/ui/Button';
-import { Stack, TextField, Typography, Alert, CircularProgress } from '@mui/material';
-import { AxiosError } from 'axios'; // <-- 1. IMPORT AXIOSERROR
+import { toast } from 'react-hot-toast';
+import { AxiosError } from 'axios';
 
 import { login } from './api.auth';
+import type { LoginInput, AuthResponse } from './types';
 import { useAuthStore } from '@/shared/store/authStore';
+import { paths } from '@/shared/config/paths';
+
+const loginSchema = z.object({
+  email: z.string().email('Email không hợp lệ').min(1, 'Email là bắt buộc'),
+  password: z.string().min(1, 'Mật khẩu là bắt buộc'),
+});
 
 export const LoginForm = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const navigate = useNavigate();
+  const { setAuth } = useAuthStore();
 
-  const { mutate, isPending, isError, error } = useMutation({ // Lấy ra các state từ useMutation
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const { mutate, isPending, error } = useMutation<AuthResponse, Error, LoginInput>({
     mutationFn: login,
     onSuccess: (data) => {
-      console.log('Login success:', data);
-      setAuth(data.token, data.data);
-      alert('Đăng nhập thành công!');
-      // Điều hướng về trang chủ sau khi đăng nhập thành công
-      window.location.href = '/';
+      // FIX Ở ĐÂY: Lấy user từ data.data
+      const { token, data: user } = data;
+      setAuth(token, user); // Giờ thì user không thể nào là null/undefined được nữa
+      toast.success('Đăng nhập thành công!');
+      navigate(paths.home, { replace: true });
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    mutate({ email, password });
+  const onSubmit: SubmitHandler<LoginInput> = (data) => {
+    mutate(data);
   };
 
-  // 2. XỬ LÝ LỖI MỘT CÁCH AN TOÀN
   const getErrorMessage = () => {
-    if (!isError) return null;
-
+    if (!error) return null;
     if (error instanceof AxiosError) {
-      // Nếu là lỗi từ axios, ta có thể an toàn truy cập `error.response`
       return error.response?.data?.message || 'Email hoặc mật khẩu không đúng.';
     }
-
-    // Đối với các loại lỗi khác
-    return error.message || 'Đã có lỗi xảy ra.';
+    return 'Đã có lỗi xảy ra.';
   };
 
   return (
-    <Stack
-      component="form"
-      onSubmit={handleSubmit}
-      spacing={2}
-      sx={{ padding: 4, border: '1px solid #ddd', borderRadius: 2, width: '100%', maxWidth: '400px', backgroundColor: 'white' }}
-    >
-      <Typography variant="h5" component="h1" textAlign="center">
-        Login
-      </Typography>
-
-      {/* Hiển thị lỗi nếu có */}
-      {isError && (
-        <Alert severity="error">
-          {getErrorMessage()}
-        </Alert>
-      )}
-
-      <TextField
-        label="Email"
-        variant="outlined"
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        disabled={isPending}
-      />
-      <TextField
-        label="Password"
-        variant="outlined"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        disabled={isPending}
-      />
-      <Button
-        variant="contained"
-        type="submit"
-        size="large"
-        disabled={isPending}
-      >
-        {isPending ? <CircularProgress size={24} color="inherit" /> : 'Login'}
-      </Button>
-    </Stack>
+    <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ p: 4, width: '100%', maxWidth: '450px' }}>
+      <Stack spacing={2}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Đăng Nhập
+        </Typography>
+        {error && <Alert severity="error">{getErrorMessage()}</Alert>}
+        <TextField {...register('email')} required fullWidth autoFocus label="Địa chỉ Email" type="email" error={!!errors.email} helperText={errors.email?.message} disabled={isPending}/>
+        <TextField {...register('password')} required fullWidth label="Mật khẩu" type="password" error={!!errors.password} helperText={errors.password?.message} disabled={isPending}/>
+        <LoadingButton type="submit" fullWidth variant="contained" size="large" loading={isPending}>
+          <span>Đăng Nhập</span>
+        </LoadingButton>
+        <Typography align="center" sx={{ mt: 2 }}>
+          Chưa có tài khoản?{' '}
+          <Link component={RouterLink} to={paths.register}>
+            Đăng ký ngay
+          </Link>
+        </Typography>
+      </Stack>
+    </Box>
   );
 };

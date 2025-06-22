@@ -9,7 +9,7 @@ import { Button as CustomButton } from '@/shared/ui/Button';
 import { useCreateBook, useUpdateBook } from './';
 import { type Book, type CreateBookInput, BookLayoutType } from './types'; // Import BookLayoutType
 import type { Language } from '../language/types';
-import type { Genre } from '../genre/types';
+import type { Genre } from '../genres/types';
 import type { Tag } from '../tag/types';
 import { AVAILABLE_FONTS } from '@/shared/config/font';
 

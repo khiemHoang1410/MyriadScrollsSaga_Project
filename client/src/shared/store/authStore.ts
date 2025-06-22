@@ -1,17 +1,12 @@
+// client/src/shared/store/authStore.ts
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware'; // Dùng middleware để lưu vào localStorage
-
-interface User {
-  _id: string;
-  username: string;
-  email: string;
-  roles: string[];
-}
+import { persist } from 'zustand/middleware';
+import type { User } from '@/features/auth';
 
 interface AuthState {
   token: string | null;
   user: User | null;
-  setAuth: (token: string, user: User) => void;
+  setAuth: (token: string | null, user: User | null) => void;
   logout: () => void;
 }
 
@@ -24,7 +19,7 @@ export const useAuthStore = create<AuthState>()(
       logout: () => set({ token: null, user: null }),
     }),
     {
-      name: 'auth-storage', // Tên key trong localStorage
+      name: 'auth-storage',
     }
   )
 );

@@ -1,13 +1,26 @@
 // client/src/features/language/api.language.ts
 import { axiosInstance } from '@/shared/api/axiosInstance';
-import type { Language } from './types';
+import type { Language, CreateLanguageInput, UpdateLanguageInput } from './types';
 
-export interface GetLanguagesResponse {
-  data: Language[];
-  count: number;
-}
+// GET ALL
+export const getLanguages = async (): Promise<Language[]> => {
+  const { data } = await axiosInstance.get<{ data: Language[] }>('/languages');
+  return data.data;
+};
 
-export const getLanguages = async (): Promise<GetLanguagesResponse> => {
-  const { data } = await axiosInstance.get<GetLanguagesResponse>('/languages?isActive=true');
-  return data;
+// CREATE
+export const createLanguage = async (languageData: CreateLanguageInput): Promise<Language> => {
+  const { data } = await axiosInstance.post<{ data: Language }>('/languages', languageData);
+  return data.data;
+};
+
+// UPDATE
+export const updateLanguage = async (languageId: string, languageData: UpdateLanguageInput): Promise<Language> => {
+  const { data } = await axiosInstance.put<{ data: Language }>(`/languages/${languageId}`, languageData);
+  return data.data;
+};
+
+// DELETE
+export const deleteLanguage = async (languageId: string): Promise<void> => {
+  await axiosInstance.delete(`/languages/${languageId}`);
 };

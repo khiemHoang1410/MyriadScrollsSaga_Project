@@ -1,3 +1,7 @@
 export * from "./api.tag"
 export * from "./types"
 export * from "./useTag"
+export * from "./useUpdateTag"
+export * from "./useCreateTag"
+export * from "./useDeleteTag"
+export * from "./tagForm"

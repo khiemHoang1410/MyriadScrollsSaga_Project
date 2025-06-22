@@ -1,26 +1,15 @@
+// client/src/features/auth/api.auth.ts
 import { axiosInstance } from '@/shared/api/axiosInstance';
-import type { LoginUserInput,RegisterUserInput,User } from './types'; 
-// Định nghĩa kiểu dữ liệu trả về từ API login
+import type { LoginInput, RegisterInput, AuthResponse } from './types';
 
-// --- Login ---
-export interface LoginResponse {
-  token: string;
-  data: User;
-}
-
-export const login = async (credentials: LoginUserInput): Promise<LoginResponse> => {
-  const { data } = await axiosInstance.post<LoginResponse>('/auth/login', credentials);
+// Hàm login giờ sẽ trả về đúng kiểu AuthResponse
+export const login = async (credentials: LoginInput): Promise<AuthResponse> => {
+  const { data } = await axiosInstance.post<AuthResponse>('/auth/login', credentials);
   return data;
 };
 
-
-// --- Register ---
-export interface RegisterResponse {
-  message: string;
-  data: User;
-}
-
-export const register = async (userData: RegisterUserInput): Promise<RegisterResponse> => {
-  const { data } = await axiosInstance.post<RegisterResponse>('/auth/register', userData);
+// Tương tự cho hàm register
+export const register = async (userData: RegisterInput): Promise<AuthResponse> => {
+  const { data } = await axiosInstance.post<AuthResponse>('/auth/register', userData);
   return data;
 };
