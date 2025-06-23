@@ -6,7 +6,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useGenres, useCreateGenre, useUpdateGenre, useDeleteGenre, GenreForm } from '@/features/genre';
 import type { Genre } from '@/features/genre';
-import { PageContainer } from '@/shared/ui/PageContainer';
 
 export const ManageGenresPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -55,7 +54,6 @@ export const ManageGenresPage = () => {
   ];
 
   return (
-    <PageContainer>
         <Box >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h4">Quản Lý Thể Loại</Typography>
@@ -84,6 +82,5 @@ export const ManageGenresPage = () => {
             </DialogContent>
           </Dialog>
         </Box>
-    </PageContainer>
   );
 };

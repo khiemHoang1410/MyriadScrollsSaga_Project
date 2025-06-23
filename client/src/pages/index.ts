@@ -11,3 +11,5 @@ export * from './admin/manage-books';
 export * from './admin/manage-genres';
 export * from './admin/manage-tag';
 export * from './admin/manage-languages';
+
+export * from './not-found-404';

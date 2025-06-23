@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Box, Drawer as MuiDrawer, List, ListItem, ListItemButton as MuiListItemButton, ListItemIcon, ListItemText, IconButton, Typography, Divider, CssBaseline, Avatar } from '@mui/material';
+import { Box, Drawer as MuiDrawer, List, ListItem, ListItemButton as MuiListItemButton, ListItemIcon, ListItemText, IconButton, Typography, Divider, CssBaseline, Avatar, Container } from '@mui/material';
 import { styled, type Theme, type CSSObject } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -88,64 +88,66 @@ export const AdminLayout = () => {
   const handleDrawerToggle = () => setOpen(!open);
 
   return (
-    <Box sx={{ display: 'flex', height: '100%' }}>
-      <CssBaseline />
-      <Drawer variant="permanent" open={open}>
-        <Box sx={{
-          // Thêm transition để paddingTop thay đổi mượt mà
-          transition: 'padding-top .5s ease-in-out 0s',
-          paddingTop: open ? 10 : 8  , // Khi mở có padding, khi đóng thì không
-          textAlign: 'center',
-        }}>
-          {/* Box chứa nội dung sẽ co giãn */}
-          <Box sx={{
-            // Quan trọng: Ẩn nội dung bị tràn ra khi co lại
-            overflow: 'hidden',
-            // "Chiêu" chính nằm ở đây: transition max-height
-            maxHeight: open ? '200px' : '0px', // Khi mở, cho chiều cao tối đa (phải lớn hơn chiều cao thật của nội dung)
-            opacity: open ? 1 : 0,
-            // Thêm transition cho các thuộc tính này
-            transition: 'max-height 1s ease-in-out, opacity 1s ease-in-out',
-          }}>
-            <Avatar sx={{
-              mx: 'auto', width: 64, height: 64, mb: 1,
-              transition: 'max-height 0s ease-in-out, opacity 1s ease-in-out',
-            }}>A</Avatar>
-            <Typography fontWeight="bold">Admin User</Typography>
-          </Box>
-        </Box>
-        <DrawerHeader>
-          <Typography variant="h6" noWrap component="div" sx={{
-            flexGrow: 1, opacity: open ? 1 : 0, transition: 'max-height 1s ease-in-out, opacity 0s ease-in-out',
-          }}>
-            MENU
-          </Typography>
 
-          {/* >>> NÚT "THỤT THÒ" NẰM Ở ĐÂY <<< */}
-          <IconButton onClick={handleDrawerToggle}>
-            {open ? <ChevronLeftIcon /> : <MenuIcon />}
-          </IconButton>
-        </DrawerHeader>
-        <Divider />
-        <List>
-          {adminNavItems.map((item) => (
-            <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
-              <NavLink to={item.path} style={{ textDecoration: 'none', color: 'inherit' }}>
-                {({ isActive }) => (
-                  <ListItemButton selected={isActive} sx={{ justifyContent: open ? 'initial' : 'center' }}>
-                    <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : 'auto', justifyContent: 'center' }}>{item.icon}</ListItemIcon>
-                    <ListItemText primary={item.text} sx={{ opacity: open ? 1 : 0 }} />
-                  </ListItemButton>
-                )}
-              </NavLink>
-            </ListItem>
-          ))}
-        </List>
-      </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 3, overflow: 'auto' }}>
-        <DrawerHeader /> {/* This is the spacer */}
-        <Outlet />
+      <Box sx={{ display: 'flex', height: '100%' ,p: { xs: 2, sm: 3, md: 4 }}}>
+        <CssBaseline />
+        <Drawer variant="permanent" open={open}>
+          <Box sx={{
+            // Thêm transition để paddingTop thay đổi mượt mà
+            transition: 'padding-top .5s ease-in-out 0s',
+            paddingTop: open ? 10 : 8, // Khi mở có padding, khi đóng thì không
+            textAlign: 'center',
+          }}>
+            {/* Box chứa nội dung sẽ co giãn */}
+            <Box sx={{
+              // Quan trọng: Ẩn nội dung bị tràn ra khi co lại
+              overflow: 'hidden',
+              // "Chiêu" chính nằm ở đây: transition max-height
+              maxHeight: open ? '200px' : '0px', // Khi mở, cho chiều cao tối đa (phải lớn hơn chiều cao thật của nội dung)
+              opacity: open ? 1 : 0,
+              // Thêm transition cho các thuộc tính này
+              transition: 'max-height 1s ease-in-out, opacity 1s ease-in-out',
+            }}>
+              <Avatar sx={{
+                mx: 'auto', width: 64, height: 64, mb: 1,
+                transition: 'max-height 0s ease-in-out, opacity 1s ease-in-out',
+              }}>A</Avatar>
+              <Typography fontWeight="bold">Admin User</Typography>
+            </Box>
+          </Box>
+          <DrawerHeader>
+            <Typography variant="h6" noWrap component="div" sx={{
+              flexGrow: 1, opacity: open ? 1 : 0, transition: 'max-height 1s ease-in-out, opacity 0s ease-in-out',
+            }}>
+              MENU
+            </Typography>
+
+            {/* >>> NÚT "THỤT THÒ" NẰM Ở ĐÂY <<< */}
+            <IconButton onClick={handleDrawerToggle}>
+              {open ? <ChevronLeftIcon /> : <MenuIcon />}
+            </IconButton>
+          </DrawerHeader>
+          <Divider />
+          <List>
+            {adminNavItems.map((item) => (
+              <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
+                <NavLink to={item.path} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  {({ isActive }) => (
+                    <ListItemButton selected={isActive} sx={{ justifyContent: open ? 'initial' : 'center' }}>
+                      <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : 'auto', justifyContent: 'center' }}>{item.icon}</ListItemIcon>
+                      <ListItemText primary={item.text} sx={{ opacity: open ? 1 : 0 }} />
+                    </ListItemButton>
+                  )}
+                </NavLink>
+              </ListItem>
+            ))}
+          </List>
+        </Drawer>
+        <Box component="main" sx={{ flexGrow: 1, p: 3, overflow: 'auto' }}>
+          <DrawerHeader /> {/* This is the spacer */}
+          <Outlet />
+        </Box>
       </Box>
-    </Box>
+
   );
 };

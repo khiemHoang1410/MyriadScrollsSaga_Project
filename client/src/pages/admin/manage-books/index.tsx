@@ -5,6 +5,7 @@ import {
   Box, Button, Typography, IconButton, Chip, Dialog,
   DialogActions, DialogContent, DialogContentText, DialogTitle, Menu, MenuItem,
   LinearProgress,
+  Container,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import EditIcon from '@mui/icons-material/Edit';
@@ -25,7 +26,6 @@ import { useUpdateBook } from '@/features/book/useUpdateBook';
 import { type Book, BookStatus } from '@/features/book/types';
 import { BookPreviewPane } from '@/widgets/BookPreviewPane';
 import { paths } from '@/shared/config/paths';
-import { PageContainer } from '@/shared/ui/PageContainer';
 import { useSmoothLoading } from '@/shared/hooks';
 
 // =================================================================
@@ -34,7 +34,7 @@ import { useSmoothLoading } from '@/shared/hooks';
 export const ManageBooksPage = () => {
   // --- A. HOOKS & STATE ---
   const navigate = useNavigate();
-const { data: booksResponse, isLoading: isFetchingBooks } = useBooks({});
+  const { data: booksResponse, isLoading: isFetchingBooks } = useBooks({});
   const { mutate: deleteBookMutate, isPending: isDeleting } = useDeleteBook();
   const { mutate: updateBookMutate, isPending: isUpdating } = useUpdateBook();
 
@@ -118,7 +118,8 @@ const { data: booksResponse, isLoading: isFetchingBooks } = useBooks({});
 
   // --- D. RENDER GIAO DIỆN ---
   return (
-    <PageContainer>
+    <Box>
+
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">Quản lý Sách</Typography>
@@ -170,7 +171,7 @@ const { data: booksResponse, isLoading: isFetchingBooks } = useBooks({});
         ))}
       </Menu>
 
+    </Box>
 
-    </PageContainer>
   );
 };

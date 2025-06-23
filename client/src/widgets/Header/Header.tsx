@@ -68,6 +68,9 @@ export const Header = () => {
                 <Typography variant="body2" color="text.secondary">{user.email}</Typography>
               </Box>
               <Divider />
+              <MenuItem component={NavLink} to={paths.dashboard.root} onClick={handleClose}>
+                Dashboard
+              </MenuItem>
               {isAdmin && (
                 <MenuItem component={NavLink} to={paths.admin.root} onClick={handleClose}>
                   Trang Admin

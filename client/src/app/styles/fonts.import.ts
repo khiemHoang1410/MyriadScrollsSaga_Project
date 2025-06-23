@@ -6,4 +6,6 @@
  */
 import '@fontsource/lobster';
 import '@fontsource-variable/lora';
+// Supports weights 200-800
+import '@fontsource-variable/dosis';
 // Sau này sếp muốn thêm font nào, chỉ cần npm install và thêm dòng import vào đây.cf           
