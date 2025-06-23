@@ -35,11 +35,11 @@ export const Header = () => {
     handleClose();
     navigate('/');
   };
-  
+
   // Rất quan trọng: Nếu chưa hydrated, render một cái skeleton để tránh hiển thị sai
   if (!hydrated) {
     return (
-      <AppBar position="static" elevation={1}>
+      <AppBar position="fixed" elevation={1} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>Myriad Scrolls Saga</Typography>
           <Skeleton variant="circular" width={32} height={32} />
@@ -49,7 +49,7 @@ export const Header = () => {
   }
 
   return (
-    <AppBar position="static" elevation={1}>
+    <AppBar position="fixed" elevation={1} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }} >
       <Toolbar>
         <Typography variant="h6" component={NavLink} to="/" sx={{ flexGrow: 1, color: 'inherit', textDecoration: 'none' }}>
           Myriad Scrolls Saga

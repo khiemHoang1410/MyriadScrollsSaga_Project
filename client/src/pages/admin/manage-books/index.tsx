@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   Box, Button, Typography, IconButton, Chip, Dialog,
   DialogActions, DialogContent, DialogContentText, DialogTitle, Menu, MenuItem,
+  LinearProgress,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import EditIcon from '@mui/icons-material/Edit';
@@ -24,6 +25,8 @@ import { useUpdateBook } from '@/features/book/useUpdateBook';
 import { type Book, BookStatus } from '@/features/book/types';
 import { BookPreviewPane } from '@/widgets/BookPreviewPane';
 import { paths } from '@/shared/config/paths';
+import { PageContainer } from '@/shared/ui/PageContainer';
+import { useSmoothLoading } from '@/shared/hooks';
 
 // =================================================================
 // COMPONENT CHÍNH CỦA TRANG - PHIÊN BẢN TINH GỌN
@@ -31,7 +34,7 @@ import { paths } from '@/shared/config/paths';
 export const ManageBooksPage = () => {
   // --- A. HOOKS & STATE ---
   const navigate = useNavigate();
-  const { data: booksResponse, isLoading } = useBooks({});
+const { data: booksResponse, isLoading: isFetchingBooks } = useBooks({});
   const { mutate: deleteBookMutate, isPending: isDeleting } = useDeleteBook();
   const { mutate: updateBookMutate, isPending: isUpdating } = useUpdateBook();
 
@@ -71,12 +74,18 @@ export const ManageBooksPage = () => {
 
   const handleCloseStatusMenu = () => setStatusMenuAnchorEl(null);
 
+
   const handleStatusChange = (newStatus: BookStatus) => {
     if (activeBookId) {
       updateBookMutate({ bookId: activeBookId, bookData: { status: newStatus } });
     }
     handleCloseStatusMenu();
   };
+
+  // STEP 2: Gom tất cả các trạng thái loading lại
+  const isDataLoading = isFetchingBooks || isDeleting || isUpdating;
+  // Dùng hook mới để tạo ra trạng thái loading "mượt"
+  const showSmoothLoading = useSmoothLoading(isDataLoading, 600); // 600ms
 
   // --- C. ĐỊNH NGHĨA CÁC CỘT CHO DATAGRID ---
   const columns: GridColDef<Book>[] = [
@@ -109,59 +118,59 @@ export const ManageBooksPage = () => {
 
   // --- D. RENDER GIAO DIỆN ---
   return (
-    <Box sx={{
-      display: 'flex',
-      justifyContent: 'flex-end', // Quan trọng: Đẩy khối con sang phải
-      p: { xs: 2, sm: 3, md: 4 }  // Padding xung quanh cho thoáng
-    }}>
-      {/* BƯỚC 2: KHỐI NỘI DUNG - Giới hạn chiều rộng tối đa */}
-      <Box sx={{ width: '100%', maxWidth: '1600px' }}> {/* Sếp có thể thay đổi số 1600px */}
+    <PageContainer>
 
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" component="h1">Quản lý Sách</Typography>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(paths.admin.addBook)}>Thêm Sách Mới</Button>
-        </Box>
-
-        <Grid container spacing={3} sx={{ height: { md: 'calc(100vh - 220px)' } }}>
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Box sx={{ height: '100%', width: '100%' }}>
-              <DataGrid<Book>
-                rows={booksResponse?.data || []}
-                columns={columns}
-                loading={isLoading || isDeleting || isUpdating}
-                getRowId={(row) => row._id}
-                onRowClick={(params: GridRowParams<Book>) => setSelectedBook(params.row)}
-                sx={{ '& .MuiDataGrid-row:hover': { cursor: 'pointer' } }}
-              />
-            </Box>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <BookPreviewPane book={selectedBook} />
-          </Grid>
-        </Grid>
-
-        {/* Dialog và Menu vẫn giữ nguyên */}
-        <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
-          <DialogTitle>Xác nhận xóa</DialogTitle>
-          <DialogContent><DialogContentText>
-            Sếp có chắc chắn muốn xóa cuốn sách này không? Hành động này không thể hoàn tác.
-          </DialogContentText></DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDeleteDialog}>Hủy</Button>
-            <Button onClick={handleConfirmDelete} color="error" autoFocus disabled={isDeleting}>
-              {isDeleting ? 'Đang xóa...' : 'Xác nhận xóa'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-        <Menu anchorEl={statusMenuAnchorEl} open={isStatusMenuOpen} onClose={handleCloseStatusMenu}>
-          {Object.values(BookStatus).map((statusValue) => (
-            <MenuItem key={statusValue} onClick={() => handleStatusChange(statusValue)}>
-              {statusValue}
-            </MenuItem>
-          ))}
-        </Menu>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" component="h1">Quản lý Sách</Typography>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(paths.admin.addBook)}>Thêm Sách Mới</Button>
       </Box>
-    </Box >
+
+      <Grid container spacing={3} sx={{ height: { md: 'calc(100vh - 220px)' } }}>
+        <Grid size={{ xs: 12, md: 8 }}>
+          <Box sx={{ height: '100%', width: '100%' }}>
+            <DataGrid<Book>
+              rows={booksResponse?.data || []}
+              columns={columns}
+              loading={showSmoothLoading || isDeleting || isUpdating}
+              getRowId={(row) => row._id}
+              onRowClick={(params: GridRowParams<Book>) => setSelectedBook(params.row)}
+              sx={{ '& .MuiDataGrid-row:hover': { cursor: 'pointer' } }}
+              slotProps={{
+                loadingOverlay: {
+                  variant: 'linear-progress',
+                  noRowsVariant: 'linear-progress',
+                },
+              }}
+            />
+          </Box>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <BookPreviewPane book={selectedBook} />
+        </Grid>
+      </Grid>
+
+      {/* Dialog và Menu vẫn giữ nguyên */}
+      <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
+        <DialogTitle>Xác nhận xóa</DialogTitle>
+        <DialogContent><DialogContentText>
+          Sếp có chắc chắn muốn xóa cuốn sách này không? Hành động này không thể hoàn tác.
+        </DialogContentText></DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog}>Hủy</Button>
+          <Button onClick={handleConfirmDelete} color="error" autoFocus disabled={isDeleting}>
+            {isDeleting ? 'Đang xóa...' : 'Xác nhận xóa'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Menu anchorEl={statusMenuAnchorEl} open={isStatusMenuOpen} onClose={handleCloseStatusMenu}>
+        {Object.values(BookStatus).map((statusValue) => (
+          <MenuItem key={statusValue} onClick={() => handleStatusChange(statusValue)}>
+            {statusValue}
+          </MenuItem>
+        ))}
+      </Menu>
+
+
+    </PageContainer>
   );
 };

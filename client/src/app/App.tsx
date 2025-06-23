@@ -1,17 +1,21 @@
 // src/app/App.tsx
+
 import { Header } from '@/widgets/Header/Header';
 import { AppRouter } from './AppRouter';
-import { Toaster } from 'react-hot-toast'; 
-// import './styles.css';
+import { Toaster } from 'react-hot-toast';
+import { Box } from '@mui/material';
 
 export const App = () => {
     return (
-        <div>
+        // Box này đảm bảo toàn bộ App có chiều cao 100%
+        <Box sx={{ height: '100%' }}>
             <Toaster position="top-center" />
-            <Header /> {/* <-- Thêm Header vào đây */}
-            <main>
+            <Header />
+            
+            {/* Box này chứa nội dung chính, cũng cao 100% */}
+            <Box component="main" sx={{ height: '100%' }}>
                 <AppRouter />
-            </main>
-        </div>
+            </Box>
+        </Box>
     );
 };

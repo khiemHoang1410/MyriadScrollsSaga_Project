@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Box, Typography, Button, Dialog, DialogTitle, DialogContent } from '@mui/material';
-import { DataGrid,type GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
+import { DataGrid, type GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useGenres, useCreateGenre, useUpdateGenre, useDeleteGenre, GenreForm } from '@/features/genre';
 import type { Genre } from '@/features/genre';
+import { PageContainer } from '@/shared/ui/PageContainer';
 
 export const ManageGenresPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -34,7 +35,7 @@ export const ManageGenresPage = () => {
     }
     handleCloseModal();
   };
-  
+
   const handleDelete = (id: string) => {
     if (window.confirm('Bạn có chắc muốn xóa thể loại này?')) {
       deleteGenre(id);
@@ -54,33 +55,35 @@ export const ManageGenresPage = () => {
   ];
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h4">Quản Lý Thể Loại</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenModal()}>
-          Thêm Thể Loại
-        </Button>
-      </Box>
+    <PageContainer>
+        <Box >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h4">Quản Lý Thể Loại</Typography>
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenModal()}>
+              Thêm Thể Loại
+            </Button>
+          </Box>
 
-      <Box sx={{ height: '70vh', width: '100%' }}>
-        <DataGrid
-          rows={genres || []}
-          columns={columns}
-          loading={isLoading}
-          getRowId={(row) => row._id}
-        />
-      </Box>
+          <Box sx={{ height: '70vh', width: '100%' }}>
+            <DataGrid
+              rows={genres || []}
+              columns={columns}
+              loading={isLoading}
+              getRowId={(row) => row._id}
+            />
+          </Box>
 
-      <Dialog open={modalOpen} onClose={handleCloseModal} fullWidth maxWidth="sm">
-        <DialogTitle>{selectedGenre ? 'Chỉnh Sửa Thể Loại' : 'Tạo Thể Loại Mới'}</DialogTitle>
-        <DialogContent>
-          <GenreForm
-            onSubmit={handleFormSubmit}
-            initialData={selectedGenre}
-            isPending={isCreating || isUpdating}
-          />
-        </DialogContent>
-      </Dialog>
-    </Box>
+          <Dialog open={modalOpen} onClose={handleCloseModal} fullWidth maxWidth="sm">
+            <DialogTitle>{selectedGenre ? 'Chỉnh Sửa Thể Loại' : 'Tạo Thể Loại Mới'}</DialogTitle>
+            <DialogContent>
+              <GenreForm
+                onSubmit={handleFormSubmit}
+                initialData={selectedGenre}
+                isPending={isCreating || isUpdating}
+              />
+            </DialogContent>
+          </Dialog>
+        </Box>
+    </PageContainer>
   );
 };

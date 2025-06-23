@@ -7,6 +7,8 @@ import { App } from './app/App';
 import { AppThemeProvider } from './providers';
 
 import './app/styles/fonts';
+import './app/styles/global.css';
+
 
 const queryClient = new QueryClient();
 
