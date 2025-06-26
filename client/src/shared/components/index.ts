@@ -1,3 +1,3 @@
 export * from "./AdminProtectedRoute"
 export * from "./ProtectedRoute"
-export * from "./LanguaggeSwitcher"
+export * from "../../features/language/components/LanguaggeSwitcher"

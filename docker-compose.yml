@@ -1,0 +1,36 @@
+# file: code/docker-compose.yml
+
+version: '3.8'
+
+services:
+  # Dịch vụ backend
+  server:
+    build:
+      context: ./server # Đường dẫn tới nơi có Dockerfile của server
+      dockerfile: Dockerfile
+    container_name: story-weaver-api # Đặt tên cho container
+    restart: unless-stopped
+    env_file:
+      - ./server/.env # Load biến môi trường từ file .env của server
+    ports:
+      - "5000:5000" # Map cổng 5000 của máy thật vào cổng 5000 của container
+    networks:
+      - story-weaver-net
+
+  # Dịch vụ frontend
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: story-weaver-client
+    restart: unless-stopped
+    ports:
+      - "8080:80" # Map cổng 8080 của máy thật vào cổng 80 của container Nginx
+    depends_on: # Khởi chạy client sau khi server đã sẵn sàng
+      - server
+    networks:
+      - story-weaver-net
+
+networks: # Tạo một mạng ảo để các container có thể "nói chuyện" với nhau
+  story-weaver-net:
+    driver: bridge

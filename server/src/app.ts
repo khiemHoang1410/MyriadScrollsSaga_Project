@@ -24,6 +24,11 @@ app.use(httpLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.get('/api/health', (req: Request, res: Response) => {
+  // Trả về status 200 và một message đơn giản là đủ
+  res.status(200).json({ status: 'UP' });
+});
+
 // API Routes
 app.use('/api/auth', authModule.authRoutes); 
 app.use('/api/users', userModule.userRoutes); 

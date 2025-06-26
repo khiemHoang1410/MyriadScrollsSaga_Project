@@ -3,13 +3,14 @@ import { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Container, Typography, Box, Alert, Stack, Paper, Button, Grid } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { usePlayState, type PlayState } from '@/features/play'; // <-- IMPORT THÊM PlayState
+import { usePlayState } from '@/features/play'; // <-- IMPORT THÊM PlayState
 import { ContentBlockRenderer } from '@/features/play/components/ContentBlockRenderer';
 import { ChoiceButton } from '@/features/play/components/ChoiceButton';
 import { PlayerStatsPane } from '@/features/play/components/PlayerStatsPane';
 import { paths } from '@/shared/config/paths';
 import { Spinner } from '@/shared/ui/Spinner';
 import { BookLayoutType } from '@/features/book';
+import type { Choice, ChoiceCondition, PlayState } from '@/features/play'; // Import thêm type
 
 // =================================================================
 // =======> KHAI BÁO 'CHỨNG MINH NHÂN DÂN' CHO PROPS <=======
@@ -19,8 +20,26 @@ interface LayoutProps {
   isMakingChoice: boolean;
 }
 // =================================================================
-
-
+const checkCondition = (condition: ChoiceCondition, variables: Record<string, any>): boolean => {
+  const playerValue = variables[condition.variableName];
+  switch (condition.operator) {
+    case 'equals': return playerValue == condition.comparisonValue;
+    case 'notEquals': return playerValue != condition.comparisonValue;
+    case 'greaterThan': return playerValue > condition.comparisonValue;
+    case 'lessThan': return playerValue < condition.comparisonValue;
+    case 'greaterThanOrEqual': return playerValue >= condition.comparisonValue;
+    case 'lessThanOrEqual': return playerValue <= condition.comparisonValue;
+    // ... có thể thêm các case khác như 'contains' sau
+    default: return true;
+  }
+};
+const isChoiceAvailable = (choice: Choice, variables: Record<string, any>): boolean => {
+  if (!choice.conditions || choice.conditions.length === 0) {
+    return true; // Không có điều kiện thì luôn available
+  }
+  // "every" có nghĩa là tất cả điều kiện phải đúng
+  return choice.conditions.every(cond => checkCondition(cond, variables));
+};
 // ----- COMPONENT CON CHO LAYOUT PHIÊU LƯU -----
 
 const AdventureLogLayout = ({ playState, onChoiceClick, isMakingChoice }: LayoutProps) => {

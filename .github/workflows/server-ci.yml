@@ -1,0 +1,45 @@
+# file: code/.github/workflows/server-ci.yml
+
+name: Server CI
+
+on:
+  push:
+    branches: [ "main", "develop" ] # Chạy khi push lên nhánh main hoặc develop
+    paths:
+      - 'server/**' # Chỉ chạy khi có thay đổi trong thư mục server
+  pull_request:
+    branches: [ "main", "develop" ] # Chạy khi có PR vào nhánh main hoặc develop
+    paths:
+      - 'server/**'
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest # Chạy trên một máy ảo Ubuntu mới nhất
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x] # Chạy test trên cả 2 phiên bản Node.js phổ biến
+
+    defaults:
+      run:
+        working-directory: ./server # Luôn chạy lệnh từ trong thư mục server
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4 # Action để lấy code từ repo về
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm' # Bật cache để lần sau npm install nhanh hơn
+        cache-dependency-path: server/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci # Dùng npm ci để cài đặt chính xác từ package-lock.json, an toàn hơn npm install
+
+    - name: Run linter
+      run: npm run lint # Chạy lệnh lint đã tạo ở bước trước
+
+    # - name: Run tests # Sẽ thêm vào sau khi mình viết unit test
+    #   run: npm test
