@@ -1,6 +1,6 @@
 // client/src/features/book/BookForm.tsx
 import { useEffect } from 'react';
-import { useForm, type SubmitHandler, Controller, type FieldError, type FieldErrorsImpl, type Merge } from 'react-hook-form';
+import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Alert, Box, CircularProgress, Stack, TextField, FormControl, InputLabel, Select, MenuItem, Autocomplete, FormHelperText } from '@mui/material';
@@ -9,7 +9,7 @@ import { Button as CustomButton } from '@/shared/ui/Button';
 import { useCreateBook, useUpdateBook } from './';
 import { type Book, type CreateBookInput, BookLayoutType } from './types'; // Import BookLayoutType
 import type { Language } from '../language/types';
-import type { Genre } from '../genres/types';
+import type { Genre } from '../genre/types';
 import type { Tag } from '../tag/types';
 import { AVAILABLE_FONTS } from '@/shared/config/font';
 

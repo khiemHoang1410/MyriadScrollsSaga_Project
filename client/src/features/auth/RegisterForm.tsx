@@ -31,7 +31,7 @@ export const RegisterForm = () => {
   const {
     register: formRegister, // Đổi tên để không trùng với hàm register API
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerFormSchema),
   });

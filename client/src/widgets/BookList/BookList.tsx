@@ -1,5 +1,5 @@
 // src/widgets/BookList/BookList.tsx
-import type { GetBooksParams } from '@/features/book/api.book';
+
 
 import { useBooks } from '@/features/book/useBooks';
 import { BookCard } from '@/entities/book/BookCard';
@@ -9,6 +9,7 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
+import type { GetBooksParams } from '@/features/book/types';
 
 
 interface BookListProps {

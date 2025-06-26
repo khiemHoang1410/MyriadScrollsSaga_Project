@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Box, Drawer as MuiDrawer, List, ListItem, ListItemButton as MuiListItemButton, ListItemIcon, ListItemText, IconButton, Typography, Divider, CssBaseline, Avatar, Container } from '@mui/material';
+import { Box, Drawer as MuiDrawer, List, ListItem, ListItemButton as MuiListItemButton, ListItemIcon, ListItemText, IconButton, Typography, Divider, CssBaseline, Avatar } from '@mui/material';
 import { styled, type Theme, type CSSObject } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -11,7 +11,6 @@ import CategoryIcon from '@mui/icons-material/Category';
 import StyleIcon from '@mui/icons-material/Style';
 import LanguageIcon from '@mui/icons-material/Language';
 import PeopleIcon from '@mui/icons-material/People';
-import AdbIcon from '@mui/icons-material/Adb';
 import { paths } from '@/shared/config/paths';
 
 const expandedDrawerWidth = 240;

@@ -1,8 +1,7 @@
 // client/src/widgets/BookPreviewPane/index.tsx
 
-import { Box, Paper, Typography, CardMedia, Divider } from '@mui/material';
+import { Paper, Typography, CardMedia, Divider } from '@mui/material';
 import type { Book } from '@/features/book/types';
-import ImageIcon from '@mui/icons-material/Image'; // Import icon ảnh
 import { ImagePlaceholder } from '@/shared/ui/ImagePlaceholder';
 
 interface BookPreviewPaneProps {
