@@ -19,3 +19,5 @@ export const App = () => {
         </Box>
     );
 };
+
+// Trigger CI/CD run
