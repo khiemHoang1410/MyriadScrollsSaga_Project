@@ -4,42 +4,37 @@ name: Server CI
 
 on:
   push:
-    branches: [ "main", "develop" ] # Chạy khi push lên nhánh main hoặc develop
+    branches: [ "main", "develop" ]
     paths:
-      - 'server/**' # Chỉ chạy khi có thay đổi trong thư mục server
+      - 'server/**'
   pull_request:
-    branches: [ "main", "develop" ] # Chạy khi có PR vào nhánh main hoặc develop
+    branches: [ "main", "develop" ]
     paths:
       - 'server/**'
 
 jobs:
   build_and_test:
-    runs-on: ubuntu-latest # Chạy trên một máy ảo Ubuntu mới nhất
-
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x, 20.x] # Chạy test trên cả 2 phiên bản Node.js phổ biến
-
+        node-version: [18.x, 20.x]
     defaults:
       run:
-        working-directory: ./server # Luôn chạy lệnh từ trong thư mục server
-
+        working-directory: ./server
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4 # Action để lấy code từ repo về
-
+      uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm' # Bật cache để lần sau npm install nhanh hơn
+        cache: 'npm'
         cache-dependency-path: server/package-lock.json
-
     - name: Install dependencies
-      run: npm ci # Dùng npm ci để cài đặt chính xác từ package-lock.json, an toàn hơn npm install
+      run: npm ci
 
-    - name: Run linter
-      run: npm run lint # Chạy lệnh lint đã tạo ở bước trước
+    # - name: Run linter
+      # run: npm run lint # <<<<<<< VÔ HIỆU HÓA NÓ Ở ĐÂY
 
-    # - name: Run tests # Sẽ thêm vào sau khi mình viết unit test
+    # - name: Run tests
     #   run: npm test

@@ -1,7 +1,7 @@
 // client/src/pages/book-edit/index.tsx
 
 import { useParams } from 'react-router-dom';
-import { Container, Typography, Box, Alert } from '@mui/material';
+import { Container, Typography, Box } from '@mui/material';
 import { BookForm } from '@/features/book/BookForm';
 import { useBook } from '@/features/book/useBook';
 import { useLanguages } from '@/features/language';

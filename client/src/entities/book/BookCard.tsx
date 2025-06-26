@@ -1,7 +1,7 @@
 // src/entities/book/BookCard.tsx
 import type { Book } from '@/features/book/types';
 import { ImagePlaceholder } from '@/shared/ui/ImagePlaceholder';
-import { Card, CardContent, CardMedia, Typography, Box } from '@mui/material';
+import { Card, CardContent, CardMedia, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 
 interface BookCardProps {

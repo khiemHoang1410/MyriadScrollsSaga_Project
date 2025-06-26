@@ -1,6 +1,6 @@
 // client/src/features/play/components/PlayerStatsPane.tsx
 
-import { Box, Paper, Typography, List, ListItem, ListItemIcon, ListItemText, Divider, Chip } from '@mui/material';
+import { Paper, Typography, List, ListItem, ListItemIcon, ListItemText, Divider, Chip } from '@mui/material';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 
 import type { Book } from '@/features/book';

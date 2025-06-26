@@ -1,5 +1,5 @@
 // client/src/pages/not-found/index.tsx
-import { Box, Button, Typography, Container, keyframes, styled } from '@mui/material';
+import { Box, Button, Typography, Container, keyframes } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { paths } from '@/shared/config/paths';
 import moonImage from '@/assets/moon.png'; // Nhớ là đường dẫn tương đối nhé

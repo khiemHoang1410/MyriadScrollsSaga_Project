@@ -1,6 +1,6 @@
 // client/src/features/play/components/ContentBlockRenderer.tsx
 
-import { Box, CardMedia, Paper, Typography } from '@mui/material';
+import { CardMedia, Paper, Typography } from '@mui/material';
 import type { ContentBlock } from '../types';
 
 interface ContentBlockRendererProps {
