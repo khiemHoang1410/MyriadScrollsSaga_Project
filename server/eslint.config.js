@@ -1,4 +1,4 @@
-// file: code/server/eslint.config.js (File mới)
+// file: code/server/eslint.config.js (Phiên bản SỬA LỖI)
 
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
@@ -6,28 +6,28 @@ import prettierConfig from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    // Bỏ qua các thư mục không cần lint
     ignores: ['dist', 'node_modules', 'eslint.config.js'],
   },
   {
-    // Cấu hình chính cho các file TypeScript
     files: ['src/**/*.ts'],
+    // === PHẦN SỬA LỖI NẰM Ở ĐÂY ===
     languageOptions: {
-      globals: {
-        node: true, // Cho phép các biến global của môi trường Node.js
+      parser: tseslint.parser, // <-- **CHÌA KHÓA VÀNG** MÀ TUI QUÊN!
+      parserOptions: {
+        project: true, // Báo cho parser biết vị trí file tsconfig
+        tsconfigRootDir: import.meta.dirname,
       },
     },
+    // ===============================
     plugins: {
       '@typescript-eslint': tseslint.plugin,
     },
     rules: {
       ...js.configs.recommended.rules,
       ...tseslint.configs.recommended.rules,
-      // Các rule tùy chỉnh của ông
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     },
   },
-  // Đặt config của Prettier ở cuối cùng để nó ghi đè các rule style
   prettierConfig,
 );
