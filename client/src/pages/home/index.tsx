@@ -2,6 +2,7 @@
 import { BookList } from '@/widgets/BookList/BookList';
 import { Box, Typography } from '@mui/material';
 import { useAuthStore } from '@/shared/store/authStore'; // Import store
+import { BookStatus } from '@/features/book';
 
 // ==========================================================
 // ======= COMPONENT DEBUG - MÁY THEO DÕI STATE =============
@@ -45,7 +46,7 @@ export const HomePage = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         Khám phá các thế giới
       </Typography>
-      <BookList filters={{ status: 'published' }} />
+      <BookList filters={{ status: BookStatus.PUBLISHED }} />
     </div>
   );
 };
