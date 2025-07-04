@@ -1,20 +1,30 @@
 // client/src/widgets/Header/Header.tsx
+
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/shared/store/authStore';
-import { AppBar, Toolbar, Typography, Box, Button, IconButton, Menu, MenuItem, Avatar, Divider, Skeleton } from '@mui/material';
+import { AppBar, Toolbar, Typography, Box, Button, IconButton, Menu, MenuItem, Avatar, Divider, Tooltip, ListItemIcon } from '@mui/material';
 import { paths } from '@/shared/config/paths';
 import { UserRole } from '@/features/auth';
 
-// Tạo một custom hook nhỏ để giải quyết vấn đề hydration
+// --- Import thêm icon cho nó lung linh ---
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import LogoutIcon from '@mui/icons-material/Logout';
+import LoginIcon from '@mui/icons-material/Login';
+import { useThemeStore } from '@/shared/store/themeStore';
+import Brightness4Icon from '@mui/icons-material/Brightness4'; // Icon mặt trăng
+import Brightness7Icon from '@mui/icons-material/Brightness7'; // Icon mặt trời
+
+// Custom hook để giải quyết vấn đề hydration, giữ nguyên vì nó quá xịn
 const useHydration = () => {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
-    // onMount, set hydrated to true
     setHydrated(true);
   }, []);
   return hydrated;
 };
+
 
 export const Header = () => {
   const { token, user, logout } = useAuthStore();
@@ -24,7 +34,6 @@ export const Header = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
-  // Tự suy ra trạng thái đăng nhập từ token
   const isAuthenticated = !!token;
   const isAdmin = user?.roles?.includes(UserRole.ADMIN);
 
@@ -35,52 +44,110 @@ export const Header = () => {
     handleClose();
     navigate('/');
   };
+  const { mode, toggleMode } = useThemeStore(); // Lấy trạng thái và hành động từ store
 
-  // Rất quan trọng: Nếu chưa hydrated, render một cái skeleton để tránh hiển thị sai
+  // Nếu chưa hydrated, render một cái skeleton để tránh FOUC (Flash of Unstyled Content)
+  // Đây là kỹ thuật rất chuyên nghiệp, mình giữ lại.
   if (!hydrated) {
     return (
-      <AppBar position="fixed" elevation={1} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>Myriad Scrolls Saga</Typography>
-          <Skeleton variant="circular" width={32} height={32} />
-        </Toolbar>
+      <AppBar position="fixed" sx={{
+        boxShadow: 'none',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.12)'
+      }}>
+        <Toolbar />
       </AppBar>
     );
   }
 
   return (
-    <AppBar position="fixed" elevation={1} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }} >
+    // ===== BẮT ĐẦU PHẪU THUẬT THẨM MỸ =====
+    <AppBar
+      position="sticky" // Giữ cho header luôn ở trên cùng khi cuộn
+      sx={{
+        // Hiệu ứng "kính mờ" (glassmorphism) siêu trend
+        background: 'rgba(255, 255, 255, 0.7)', // Nền trắng mờ
+        backdropFilter: 'blur(10px)', // Hiệu ứng mờ
+        boxShadow: 'inset 0px -1px 1px #ddd', // Đường kẻ mờ tinh tế ở dưới
+        color: '#000', // Đổi màu chữ mặc định thành màu đen
+      }}
+    >
       <Toolbar>
-        <Typography variant="h6" component={NavLink} to="/" sx={{ flexGrow: 1, color: 'inherit', textDecoration: 'none' }}>
-          Myriad Scrolls Saga
+        {/* === Logo/Tên trang web === */}
+        <Typography
+          variant="h6"
+          component={NavLink} to="/"
+          sx={{
+            flexGrow: 1,
+            textDecoration: 'none',
+            color: 'text.primary', // Dùng màu chữ chính của theme
+            fontWeight: 'bold',
+            fontFamily: 'monospace',
+            letterSpacing: '.1rem',
+            '&:hover': {
+              color: 'primary.main' // Hiệu ứng đổi màu khi hover
+            }
+          }}
+        >
+          MyriadScrollsSaga
         </Typography>
-
+        <IconButton sx={{ ml: 1 }} onClick={toggleMode} color="inherit">
+          {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+        </IconButton>
+        {/* === Nút Bấm Khi Đã Đăng Nhập / Chưa Đăng Nhập === */}
         {isAuthenticated && user ? (
           <Box>
-            <IconButton onClick={handleMenu} sx={{ p: 0 }}>
-              <Avatar alt={user.username} sx={{ width: 32, height: 32, textTransform: 'uppercase' }}>
-                {user.username?.[0] || '?'}
-              </Avatar>
-            </IconButton>
-            <Menu anchorEl={anchorEl} open={open} onClose={handleClose} sx={{ mt: '45px' }} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
+            {/* Thêm Tooltip để khi rê chuột vào thấy tên đầy đủ */}
+            <Tooltip title={user.username || ''}>
+              <IconButton onClick={handleMenu} sx={{ p: 0 }}>
+                <Avatar alt={user.username} sx={{ bgcolor: 'primary.main', color: 'white' }}>
+                  {user.username?.[0]?.toUpperCase() || '?'}
+                </Avatar>
+              </IconButton>
+            </Tooltip>
+
+            {/* Menu người dùng được "tân trang" lại */}
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+              sx={{ mt: '45px' }}
+              anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            // Thêm hiệu ứng cho cái khung menu
+
+            >
               <Box sx={{ p: 2, pt: 1, borderBottom: 1, borderColor: 'divider' }}>
                 <Typography variant="subtitle1" fontWeight="bold">{user.username}</Typography>
                 <Typography variant="body2" color="text.secondary">{user.email}</Typography>
               </Box>
-              <Divider />
+              <Divider sx={{ my: 0.5 }} />
+
+              {/* Thêm icon vào các MenuItem */}
               <MenuItem component={NavLink} to={paths.dashboard.root} onClick={handleClose}>
+                <ListItemIcon><DashboardIcon fontSize="small" /></ListItemIcon>
                 Dashboard
               </MenuItem>
               {isAdmin && (
                 <MenuItem component={NavLink} to={paths.admin.root} onClick={handleClose}>
+                  <ListItemIcon><AdminPanelSettingsIcon fontSize="small" /></ListItemIcon>
                   Trang Admin
                 </MenuItem>
               )}
-              <MenuItem onClick={handleLogout}>Đăng xuất</MenuItem>
+              <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                <ListItemIcon><LogoutIcon fontSize="small" sx={{ color: 'error.main' }} /></ListItemIcon>
+                Đăng xuất
+              </MenuItem>
             </Menu>
           </Box>
         ) : (
-          <Button color="inherit" component={NavLink} to={paths.login}>
+          // Nút đăng nhập cũng có icon cho nó "chanh sả"
+          <Button
+            color="primary"
+            variant="contained"
+            component={NavLink} to={paths.login}
+            startIcon={<LoginIcon />}
+            sx={{ borderRadius: '20px', textTransform: 'none' }} // Bo tròn và chữ không viết hoa
+          >
             Đăng nhập
           </Button>
         )}
