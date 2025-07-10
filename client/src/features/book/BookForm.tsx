@@ -1,33 +1,40 @@
-// client/src/features/book/BookForm.tsx
+// client/src/features/book/BookForm.tsx (Phiên bản đã được tái cấu trúc)
+
 import { useEffect } from 'react';
-import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
+import { useForm, type SubmitHandler, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Alert, Box, CircularProgress, Stack, TextField, FormControl, InputLabel, Select, MenuItem, Autocomplete, FormHelperText } from '@mui/material';
+import { Alert, Box, CircularProgress, Stack, Grid, Paper, Typography } from '@mui/material';
 import { Button as CustomButton } from '@/shared/ui/Button';
 
 import { useCreateBook, useUpdateBook } from './';
-import { type Book, type CreateBookInput, BookLayoutType } from './types'; // Import BookLayoutType
+import { type Book, type CreateBookInput, BookLayoutType } from './types';
 import type { Language } from '../language/types';
 import type { Genre } from '../genre/types';
 import type { Tag } from '../tag/types';
-import { AVAILABLE_FONTS } from '@/shared/config/font';
 
-// Zod Schema hoàn chỉnh
+// --- Import các Section con mà mình SẼ tạo ở các bước tiếp theo ---
+// (Lát nữa mình tạo file thì nó sẽ hết báo lỗi)
+import { BookForm_BasicInfo } from './form-sections/BookForm_BasicInfo';
+import { BookForm_Taxonomy } from './form-sections/BookForm_Taxonomy';
+import { BookForm_ContentJson } from './form-sections/BookForm_ContentJson';
+import { BookForm_Settings } from './form-sections/BookForm_Settings';
+
+
+// Zod Schema vẫn giữ nguyên, nó là "bản thiết kế" dữ liệu của mình.
 const bookFormSchema = z.object({
   title: z.string().min(1, 'Tiêu đề là bắt buộc'),
   description: z.string().optional(),
   coverImageUrl: z.string().url({ message: 'URL ảnh bìa không hợp lệ' }).optional().or(z.literal('')),
   fontFamily: z.string().optional(),
-  layoutType: z.nativeEnum(BookLayoutType).optional(),
+  layoutType: z.nativeEnum(BookLayoutType), // Bỏ optional() để bắt buộc chọn
   bookLanguage: z.string().min(1, 'Vui lòng chọn ngôn ngữ'),
   genres: z.array(z.string()).min(1, 'Chọn ít nhất một thể loại'),
   tags: z.array(z.string()).optional(),
   startNodeId: z.string().min(1, 'Cần có ID của node bắt đầu').default('start'),
-
   storyNodes: z.string().transform((str, ctx) => {
     try {
-      if (!str) return [];
+      if (!str.trim()) return [];
       return JSON.parse(str);
     } catch (e) {
       ctx.addIssue({ code: 'custom', message: 'JSON của Story Nodes không hợp lệ' });
@@ -36,7 +43,7 @@ const bookFormSchema = z.object({
   }),
   storyVariables: z.string().transform((str, ctx) => {
     try {
-      if (!str) return [];
+      if (!str.trim()) return [];
       return JSON.parse(str);
     } catch (e) {
       ctx.addIssue({ code: 'custom', message: 'JSON của Story Variables không hợp lệ' });
@@ -45,7 +52,7 @@ const bookFormSchema = z.object({
   }),
 });
 
-type BookFormValues = z.infer<typeof bookFormSchema>;
+export type BookFormValues = z.infer<typeof bookFormSchema>;
 
 interface BookFormProps {
   initialData?: Book;
@@ -58,20 +65,14 @@ interface BookFormProps {
 
 export const BookForm = ({ initialData, bookId, languages = [], genres = [], tags = [], isDataLoading }: BookFormProps) => {
   const isEditMode = !!initialData;
-
   const { mutate: createBook, isPending: isCreating, error: createError } = useCreateBook();
   const { mutate: updateBook, isPending: isUpdating, error: updateError } = useUpdateBook();
 
-  const isPending = isCreating || isUpdating || isDataLoading;
+  const isPending = !!(isCreating || isUpdating || isDataLoading);
   const error = createError || updateError;
 
-  const {
-    control, // Bắt buộc phải có control để dùng với Controller
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<BookFormValues>({
+  // Khởi tạo form và lấy ra tất cả các "đồ nghề"
+  const methods = useForm<BookFormValues>({
     resolver: zodResolver(bookFormSchema),
     defaultValues: {
       title: initialData?.title || '',
@@ -83,31 +84,29 @@ export const BookForm = ({ initialData, bookId, languages = [], genres = [], tag
       genres: initialData?.genres?.map(g => g._id) || [],
       tags: initialData?.tags?.map(t => t._id) || [],
       startNodeId: initialData?.startNodeId || 'start',
-      // Chuyển object thành chuỗi JSON để hiển thị
       storyNodes: initialData ? JSON.stringify(initialData.storyNodes, null, 2) : '[]',
       storyVariables: initialData ? JSON.stringify(initialData.storyVariables, null, 2) : '[]',
-
     },
   });
 
   useEffect(() => {
     if (initialData) {
-      reset({
+      // Dùng reset từ methods
+      methods.reset({
         title: initialData.title,
         description: initialData.description || '',
         coverImageUrl: initialData.coverImageUrl || '',
         fontFamily: initialData.fontFamily || '',
-        layoutType: initialData.layoutType || BookLayoutType.LITE_NOVEL,
+        layoutType: initialData.layoutType,
         bookLanguage: initialData.bookLanguage._id,
         genres: initialData.genres.map(g => g._id),
         tags: initialData.tags.map(t => t._id),
-        startNodeId: initialData.startNodeId || 'start',
-        // Chuyển object thành chuỗi JSON khi reset form
+        startNodeId: initialData.startNodeId,
         storyNodes: JSON.stringify(initialData.storyNodes, null, 2),
         storyVariables: JSON.stringify(initialData.storyVariables, null, 2),
       });
     }
-  }, [initialData, reset]);
+  }, [initialData, methods.reset]);
 
   const onSubmit: SubmitHandler<BookFormValues> = (data) => {
     if (isEditMode && bookId) {
@@ -117,145 +116,42 @@ export const BookForm = ({ initialData, bookId, languages = [], genres = [], tag
     }
   };
 
-  const getHelperText = (error: any): string | undefined => {
-    if (!error) return undefined;
-    if (typeof error.message === 'string') {
-      return error.message;
-    }
-    return 'Invalid Input'; // Fallback nếu message không phải string
-  };
-  
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3, maxWidth: '800px' }}>
-      <Stack spacing={3}>
-        {error && <Alert severity="error">{(error as any).message || 'Có lỗi xảy ra'}</Alert>}
+    // <FormProvider> là "trùm cuối", nó sẽ phát "sóng wifi" chứa context của form
+    <FormProvider {...methods}>
+      <Box component="form" onSubmit={methods.handleSubmit(onSubmit)} sx={{ mt: 3 }}>
+        <Grid container spacing={4}>
+          {/* Cột chính bên trái */}
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Stack spacing={3}>
+              {error && <Alert severity="error">{(error as any).message || 'Có lỗi xảy ra'}</Alert>}
 
-        <TextField {...register('title')} label="Tiêu đề sách *" fullWidth error={!!errors.title} helperText={errors.title?.message} disabled={isPending} />
-        <TextField {...register('coverImageUrl')} label="URL ảnh bìa" fullWidth error={!!errors.coverImageUrl} helperText={errors.coverImageUrl?.message} disabled={isPending} />
-        <TextField {...register('description')} label="Mô tả" fullWidth multiline rows={4} error={!!errors.description} helperText={errors.description?.message} disabled={isPending} />
-        <TextField
-          {...register('storyNodes')}
-          label="Nội dung truyện (JSON của Story Nodes)"
-          fullWidth
-          multiline
-          rows={15}
-          error={!!errors.storyNodes}
-          helperText={getHelperText(errors.storyVariables)}
-          disabled={isPending}
-          placeholder='Dán mảng JSON của storyNodes vào đây'
-          variant="filled"
-        />
+              {/* Thay thế một đống TextField bằng một component section duy nhất */}
+              <BookForm_BasicInfo isPending={isPending} />
 
-        <TextField
-          {...register('storyVariables')}
-          label="Biến của truyện (JSON của Story Variables)"
-          fullWidth
-          multiline
-          rows={5}
-          error={!!errors.storyVariables}
-          helperText={getHelperText(errors.storyVariables)}
-          placeholder='Dán mảng JSON của storyVariables vào đây'
-          variant="filled"
-        />
-        <Controller
-          name="fontFamily"
-          control={control}
-          defaultValue={initialData?.fontFamily || 'Public Sans'} // Set giá trị mặc định
-          render={({ field, fieldState: { error } }) => (
-            <FormControl fullWidth error={!!error}>
-              <InputLabel id="font-family-select-label">Font chữ cho truyện</InputLabel>
-              <Select
-                {...field}
-                labelId="font-family-select-label"
-                label="Font chữ cho truyện"
-                disabled={isPending}
-              >
-                <MenuItem value="">
-                  <em>Không chọn (Dùng font mặc định)</em>
-                </MenuItem>
-                {/* Lấy danh sách từ file config */}
-                {AVAILABLE_FONTS.map((font) => (
-                  <MenuItem key={font.value} value={font.value}>
-                    {font.name}
-                  </MenuItem>
-                ))}
-              </Select>
-              {error && <FormHelperText>{error.message}</FormHelperText>}
-            </FormControl>
-          )}
-        />
+              {/* Tương tự cho phần nội dung JSON */}
+              <BookForm_ContentJson isPending={isPending} />
+            </Stack>
+          </Grid>
 
+          {/* Cột phụ bên phải, sẽ dính lại khi cuộn */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 2, position: 'sticky', top: '80px' }}>
+              <Stack spacing={3}>
+                <Typography variant="h6">Cài đặt & Phân loại</Typography>
 
-        <Controller
-          name="layoutType"
-          control={control}
-          render={({ field }) => (
-            <FormControl fullWidth error={!!errors.layoutType}>
-              <InputLabel id="layout-type-select-label">Loại giao diện</InputLabel>
-              <Select {...field} labelId="layout-type-select-label" label="Loại giao diện" disabled={isPending}>
-                <MenuItem value={BookLayoutType.LITE_NOVEL}>Tiểu Thuyết (Đơn giản, tập trung vào chữ)</MenuItem>
-                <MenuItem value={BookLayoutType.ADVENTURE_LOG}>Phiêu Lưu (Có bảng trạng thái bên cạnh)</MenuItem>
-              </Select>
-            </FormControl>
-          )}
-        />
+                {/* Thay thế các Select, Autocomplete bằng các section con */}
+                <BookForm_Settings isPending={isPending} languages={languages} />
+                <BookForm_Taxonomy isPending={isPending} genres={genres} tags={tags} />
 
-        <Controller
-          name="bookLanguage"
-          control={control}
-          render={({ field }) => (
-            <FormControl fullWidth error={!!errors.bookLanguage}>
-              <InputLabel id="language-select-label">Ngôn ngữ *</InputLabel>
-              <Select {...field} labelId="language-select-label" label="Ngôn ngữ *" disabled={isPending}>
-                {languages.map((lang) => (<MenuItem key={lang._id} value={lang._id}>{lang.name}</MenuItem>))}
-              </Select>
-              {errors.bookLanguage && <FormHelperText>{errors.bookLanguage.message}</FormHelperText>}
-            </FormControl>
-          )}
-        />
-
-        <Controller
-          name="genres"
-          control={control}
-          render={({ field }) => (
-            <Autocomplete
-              multiple
-              options={genres}
-              getOptionLabel={(option) => option.name}
-              isOptionEqualToValue={(option, value) => option._id === value._id}
-              value={field.value.map(id => genres.find(g => g._id === id)).filter(Boolean) as Genre[]}
-              onChange={(_, newValue) => field.onChange(newValue.map(item => item._id))}
-              renderInput={(params) => <TextField {...params} label="Thể loại *" error={!!errors.genres} helperText={errors.genres?.message} />}
-              disabled={isPending}
-            />
-          )}
-        />
-
-        <Controller
-          name="tags"
-          control={control}
-          render={({ field }) => (
-            <Autocomplete
-              multiple
-              options={tags}
-              getOptionLabel={(option) => option.name}
-              isOptionEqualToValue={(option, value) => option._id === value._id}
-              value={(field.value || []).map(id => tags.find(t => t._id === id)).filter(Boolean) as Tag[]}
-              onChange={(_, newValue) => field.onChange(newValue.map(item => item._id))}
-              renderInput={(params) => <TextField {...params} label="Thẻ (Tags)" />}
-              disabled={isPending}
-            />
-          )}
-        />
-
-
-
-        <TextField {...register('startNodeId')} label="Start Node ID *" fullWidth required error={!!errors.startNodeId} helperText={errors.startNodeId?.message} disabled={isPending} />
-
-        <CustomButton type="submit" variant="contained" size="large" disabled={isPending} sx={{ mt: 2 }} startIcon={isPending ? <CircularProgress size="1rem" color="inherit" /> : null}>
-          {isPending ? 'Đang lưu...' : (isEditMode ? 'Cập nhật sách' : 'Tạo sách mới')}
-        </CustomButton>
-      </Stack>
-    </Box>
+                <CustomButton type="submit" variant="contained" size="large" fullWidth disabled={isPending} startIcon={isPending ? <CircularProgress size="1rem" color="inherit" /> : null}>
+                  {isPending ? 'Đang lưu...' : (isEditMode ? 'Cập nhật sách' : 'Tạo sách mới')}
+                </CustomButton>
+              </Stack>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Box>
+    </FormProvider>
   );
 };

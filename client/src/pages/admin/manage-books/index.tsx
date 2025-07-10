@@ -117,8 +117,6 @@ export const ManageBooksPage = () => {
   // --- D. RENDER GIAO DIỆN ---
   return (
     <Box>
-
-
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">Quản lý Sách</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(paths.admin.addBook)}>Thêm Sách Mới</Button>
